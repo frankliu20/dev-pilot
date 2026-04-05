@@ -1,0 +1,42 @@
+# Dev Pilot Configuration
+# Copy this file to ~/.claude/pilot.yaml and customize for your project.
+# NOTE: pilot.yaml is machine-local — never commit it to version control.
+
+# Workspace directory — where repos, logs, and worktrees are stored
+workspace: ~/claude/workspace
+
+# GitHub repos to work with (owner/repo format)
+# The first repo is the primary target for /pilot-dev-issue
+repos:
+  - your-org/your-repo
+
+# AI platform — which CLI tool to use on the dashboard
+# Options: copilot-cli, claude-code
+ai_platform: claude-code
+
+# Chat language — the language Claude uses for discussions and explanations
+# Code, commits, and PRs are always in English regardless of this setting.
+# Examples: English, Chinese (Mandarin), Japanese, etc.
+chat_language: English
+
+# Default modes for automation
+defaults:
+  dev_issue_mode: normal       # normal = interactive, auto = fully automated
+  review_pr_mode: auto         # auto = publish review immediately, normal = interactive
+  fix_comment_mode: auto       # auto = fix and push, normal = confirm first
+  review_min_severity: medium  # high, medium, low — minimum severity to report in reviews
+
+# Build & test commands (optional — auto-detected from project if omitted)
+# Only set these if you need to override the auto-detected commands.
+# build:
+#   command: npm run build                                          # Override build command
+#   test_command: npx jest --testPathPattern={{file}} --no-coverage  # Override test command ({{file}} = test file pattern)
+#   test_all_command: npm run test                                   # Override "run all tests" command
+#   lint_command: npm run lint                                       # Override lint command
+#   default_branch: main                                             # Default git branch
+
+# Advanced: custom test runner skill (optional)
+# Point to a skill in ~/.claude/skills/ for complex test workflows
+# (e.g., cross-repo builds, manual verification scenarios).
+# If omitted, /pilot-dev-issue uses inline build/test with auto-detection.
+# test_runner_skill: my-custom-test-runner

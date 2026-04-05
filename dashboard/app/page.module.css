@@ -1,0 +1,287 @@
+.dashboard {
+  width: var(--dashboard-width);
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+  min-height: 100vh;
+}
+
+/* --- Header --- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-muted);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.logo {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-fg-default);
+  letter-spacing: -0.3px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.connectionStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-2xs);
+  color: var(--color-fg-subtle);
+}
+
+.offWorkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  background: none;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  transition: all var(--duration-normal);
+}
+.offWorkBtn:hover {
+  color: var(--color-success-fg);
+  border-color: var(--color-success-fg);
+  background: var(--color-bg-emphasis);
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  background: var(--color-bg-emphasis);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: var(--weight-medium);
+  color: var(--color-fg-muted);
+}
+
+.themeToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+  transition: all var(--duration-normal);
+}
+.themeToggle:hover {
+  color: var(--color-fg-default);
+  background: var(--color-bg-emphasis);
+  border-color: var(--color-border-emphasis);
+}
+
+/* --- Summary Stats --- */
+.summaryBar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.summaryCard {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: all var(--duration-normal);
+  border-left: 3px solid transparent;
+}
+.summaryCard:hover {
+  background: var(--color-bg-muted);
+  border-color: var(--color-border-emphasis);
+}
+.summaryCard.info { border-left-color: var(--color-info-emphasis); }
+.summaryCard.purple { border-left-color: var(--color-purple-emphasis); }
+.summaryCard.success { border-left-color: var(--color-success-emphasis); }
+.summaryCard.warning { border-left-color: var(--color-warning-emphasis); }
+
+.summaryNumber {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--color-fg-default);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryLabel {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  margin-top: var(--space-1);
+}
+
+.summarySub {
+  font-size: var(--text-2xs);
+  color: var(--color-fg-subtle);
+  margin-top: 2px;
+}
+
+/* --- Tabs --- */
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: var(--space-4);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: 3px;
+  position: relative;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-normal);
+  position: relative;
+  z-index: 1;
+}
+.tab:hover {
+  color: var(--color-fg-default);
+}
+.tab.active {
+  color: var(--color-fg-default);
+  background: var(--color-bg-muted);
+  box-shadow: var(--shadow-sm);
+}
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* --- Tab Content --- */
+.tabContent {
+  min-height: 300px;
+  animation: fadeIn var(--duration-slow) var(--ease-out);
+}
+
+/* --- Keyboard Shortcuts Overlay --- */
+.shortcutsOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-overlay);
+  backdrop-filter: blur(4px);
+  z-index: var(--z-modal);
+  animation: fadeIn var(--duration-normal);
+}
+
+.shortcutsDialog {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  max-width: 480px;
+  width: 90%;
+  box-shadow: var(--shadow-xl);
+}
+
+.shortcutsTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-4) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shortcutsList {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2) var(--space-6);
+}
+
+.shortcutItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) 0;
+}
+
+.shortcutLabel {
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+}
+
+.shortcutKeys {
+  display: flex;
+  gap: 4px;
+}
+
+/* --- Panel Layout (desktop) --- */
+.panelLayout {
+  display: flex;
+  gap: 0;
+}
+
+.mainContent {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: var(--space-3) var(--space-3);
+  }
+  .summaryBar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .tabs {
+    flex-wrap: wrap;
+  }
+  .tab {
+    flex: 1 1 45%;
+  }
+  .shortcutsList {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .summaryBar {
+    grid-template-columns: 1fr;
+  }
+}

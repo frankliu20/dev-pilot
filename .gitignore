@@ -1,0 +1,20 @@
+node_modules/
+.next/
+.env.local
+.env.*.local
+*.tsbuildinfo
+next-env.d.ts
+.claude/
+claude/plans/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Personal skills (local only, not pushed to remote)
+personal-skills/*
+!personal-skills/README.md
+!personal-skills/.gitkeep

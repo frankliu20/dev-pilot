@@ -1,0 +1,168 @@
+.tabHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.tabTitle {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--color-fg-muted);
+  margin: 0;
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.filterBtn {
+  padding: var(--space-1) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  color: var(--color-fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+.filterBtn:hover {
+  background: var(--color-bg-muted);
+  border-color: var(--color-border-emphasis);
+}
+.filterBtn.active {
+  background: var(--color-accent-bg);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* List */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Card */
+.card {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+.card:hover {
+  background: var(--color-bg-muted);
+}
+.cardExpanded {
+  border-color: var(--color-border-emphasis);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cardIcon {
+  color: var(--color-fg-subtle);
+  flex-shrink: 0;
+}
+
+.cardName {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  font-family: var(--font-mono);
+  flex: 1;
+}
+
+.expandIcon {
+  color: var(--color-fg-subtle);
+  flex-shrink: 0;
+  transition: color var(--duration-fast);
+}
+.card:hover .expandIcon {
+  color: var(--color-fg-muted);
+}
+.cardExpanded .expandIcon {
+  color: var(--color-accent);
+}
+
+/* Body (markdown content) */
+.cardBody {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-muted);
+  font-size: var(--text-sm);
+  color: var(--color-fg-muted);
+  line-height: var(--leading-relaxed);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.cardBody h1, .cardBody h2, .cardBody h3 {
+  color: var(--color-fg-default);
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-default);
+  padding-bottom: var(--space-1);
+}
+.cardBody h1 { font-size: var(--text-lg); }
+.cardBody h2 { font-size: var(--text-base); }
+.cardBody h3 { font-size: var(--text-sm); font-weight: var(--weight-semibold); border-bottom: none; }
+.cardBody h4 { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--color-fg-default); margin-top: var(--space-2); margin-bottom: var(--space-1); }
+.cardBody p { margin: var(--space-2) 0; }
+.cardBody ul, .cardBody ol { padding-left: var(--space-5); margin: var(--space-2) 0; }
+.cardBody li { margin: var(--space-1) 0; }
+.cardBody code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--color-bg-emphasis);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  color: var(--color-info-fg);
+}
+.cardBody pre {
+  margin: var(--space-2) 0;
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+.cardBody pre code {
+  display: block;
+  padding: var(--space-3);
+  color: var(--color-fg-muted);
+  line-height: var(--leading-relaxed);
+  background: var(--color-bg-emphasis);
+}
+.cardBody a { color: var(--color-accent); text-decoration: underline; }
+.cardBody blockquote {
+  border-left: 3px solid var(--color-info-emphasis);
+  margin: var(--space-2) 0;
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-fg-subtle);
+}
+.cardBody table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-2) 0;
+  font-size: var(--text-sm);
+}
+.cardBody th, .cardBody td {
+  border: 1px solid var(--color-border-default);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+}
+.cardBody th {
+  background: var(--color-bg-emphasis);
+  color: var(--color-fg-default);
+  font-weight: var(--weight-semibold);
+}
+.cardBody img { max-width: 100%; border-radius: var(--radius-md); }
+.cardBody hr { border: none; border-top: 1px solid var(--color-border-default); margin: var(--space-3) 0; }
+.cardBody strong { color: var(--color-fg-default); }
+.cardBody input[type="checkbox"] { margin-right: var(--space-2); }

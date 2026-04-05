@@ -1,0 +1,97 @@
+.container {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-2);
+  z-index: var(--z-toast);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  color: var(--color-fg-default);
+  max-width: 420px;
+  min-width: 300px;
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  animation: toastSlideUp var(--duration-slow) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.toast.success { border-left: 3px solid var(--color-success-emphasis); }
+.toast.warning { border-left: 3px solid var(--color-warning-emphasis); }
+.toast.danger  { border-left: 3px solid var(--color-danger-emphasis); }
+.toast.info    { border-left: 3px solid var(--color-info-emphasis); }
+
+.icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.icon.success { color: var(--color-success-fg); }
+.icon.warning { color: var(--color-warning-fg); }
+.icon.danger  { color: var(--color-danger-fg); }
+.icon.info    { color: var(--color-info-fg); }
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-weight: var(--weight-medium);
+  margin-bottom: 2px;
+}
+
+.message {
+  color: var(--color-fg-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+.close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--color-fg-subtle);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  display: flex;
+}
+.close:hover {
+  color: var(--color-fg-muted);
+  background: var(--color-bg-emphasis);
+}
+
+/* Progress bar */
+.progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-fg-subtle);
+  transition: width 100ms linear;
+}
+.toast.success .progress { background: var(--color-success-emphasis); }
+.toast.warning .progress { background: var(--color-warning-emphasis); }
+.toast.danger  .progress { background: var(--color-danger-emphasis); }
+.toast.info    .progress { background: var(--color-info-emphasis); }
+
+@keyframes toastSlideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+}
