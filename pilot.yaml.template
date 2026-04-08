@@ -1,0 +1,33 @@
+# Dev Pilot Configuration
+# Copy this file to ~/.claude/pilot.yaml and customize for your project.
+
+# Workspace directory — where repos, logs, and worktrees are stored
+workspace: ~/claude/workspace
+
+# GitHub repos to work with (owner/repo format)
+# The first repo is the primary target for /pilot-dev-issue
+repos:
+  - your-org/your-repo
+
+# Skill packs to activate — each maps to a directory under skills/ in the dev-pilot repo
+# These are copied to ~/.claude/skills/ during init
+skills: []
+
+# AI platform — which CLI tool to use on the dashboard
+# Options: copilot-cli, claude-code
+ai_platform: claude-code
+
+# Default modes for automation
+defaults:
+  dev_issue_mode: normal       # normal = interactive, auto = fully automated
+  review_pr_mode: auto         # auto = publish review immediately, normal = interactive
+  fix_comment_mode: auto       # auto = fix and push, normal = confirm first
+  review_min_severity: medium  # high, medium, low — minimum severity to report in reviews
+
+# Build & test commands (optional — defaults shown below)
+# build:
+#   command: npm run build
+#   test_command: npx jest --testPathPattern={{file}} --no-coverage
+#   test_all_command: npm run test
+#   lint_command: npm run lint
+#   default_branch: main

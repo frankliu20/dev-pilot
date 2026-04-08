@@ -1,13 +1,27 @@
-// GET /api/prs — fetch my open PRs with action classification
+// GET /api/prs — fetch my open PRs + review-requested PRs with action classification
 
 import { NextResponse } from 'next/server';
-import { fetchMyOpenPRs, classifyPRAction } from '@/lib/github';
+import { fetchMyOpenPRs, fetchReviewRequestedPRs, fetchUnresolvedThreadCounts, classifyPRAction } from '@/lib/github';
 
 export async function GET() {
-  const prs = fetchMyOpenPRs();
-  const enriched = prs.map(pr => ({
-    ...pr,
-    action: classifyPRAction(pr),
-  }));
-  return NextResponse.json({ prs: enriched });
+  const [myPRs, reviewRequestedPRs] = await Promise.all([
+    fetchMyOpenPRs(),
+    fetchReviewRequestedPRs(),
+  ]);
+
+  // Batch GraphQL call for unresolved review thread counts (grouped by repo)
+  const allPRs = [...myPRs, ...reviewRequestedPRs];
+  const unresolvedCounts = await fetchUnresolvedThreadCounts(allPRs);
+
+  const prs = myPRs.map(pr => {
+    const enriched = { ...pr, unresolvedThreadCount: unresolvedCounts.get(pr.number) };
+    return { ...enriched, action: classifyPRAction(enriched) };
+  });
+
+  const reviewRequested = reviewRequestedPRs.map(pr => {
+    const enriched = { ...pr, unresolvedThreadCount: unresolvedCounts.get(pr.number) };
+    return { ...enriched, action: classifyPRAction(enriched) };
+  });
+
+  return NextResponse.json({ prs, reviewRequested });
 }

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ClaudeTask } from '@/lib/types';
+import { ClaudeTask, DecisionRequest } from '@/lib/types';
 
 export function useTaskStream() {
   const [tasks, setTasks] = useState<ClaudeTask[]>([]);
+  const [decisions, setDecisions] = useState<DecisionRequest[]>([]);
   const [connected, setConnected] = useState(false);
   const esRef = useRef<EventSource | null>(null);
 
@@ -20,6 +21,11 @@ export function useTaskStream() {
       setConnected(true);
     });
 
+    es.addEventListener('decisions', (e: MessageEvent) => {
+      const data = JSON.parse(e.data);
+      setDecisions(data.decisions || []);
+    });
+
     es.onerror = () => {
       setConnected(false);
       es.close();
@@ -32,7 +38,7 @@ export function useTaskStream() {
     return () => { esRef.current?.close(); };
   }, [connect]);
 
-  return { tasks, connected };
+  return { tasks, decisions, connected };
 }
 
 export function useGitHubData<T>(url: string, interval = 30000) {

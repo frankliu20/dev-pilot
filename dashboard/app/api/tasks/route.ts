@@ -1,4 +1,4 @@
-// GET /api/tasks — read task-status.jsonl and return derived tasks
+// GET /api/tasks — read per-task log files and return derived tasks
 
 import { NextResponse } from 'next/server';
 import { deriveTasks } from '@/lib/statusLog';

@@ -1,38 +1,33 @@
-// Read task-status.jsonl and derive task states
+// Read per-task JSONL log files and derive task states
+// Each task has its own log file: logs/<task_id>.jsonl (e.g., issue-123.jsonl)
+// Cross-task summary events go to logs/summary.jsonl
 
-import { readFileSync, existsSync, watchFile, unwatchFile } from 'fs';
+import { readFileSync, readdirSync, existsSync, watch } from 'fs';
 import { join } from 'path';
 import { StatusLogEntry, ClaudeTask, TaskPhase } from './types';
+import { getWorkspace } from './config';
 
-const HOME = process.env.HOME || process.env.USERPROFILE || '';
-const WORKSPACE_FILE = join(HOME, '.claude', '.mod-workspace');
-
-function getWorkspace(): string {
-  if (existsSync(WORKSPACE_FILE)) {
-    return readFileSync(WORKSPACE_FILE, 'utf-8').trim();
-  }
-  // Fallback to ~/.claude for backward compatibility
-  return join(HOME, '.claude');
+function getLogDir(): string {
+  return join(getWorkspace(), 'logs');
 }
 
-function getLogFile(): string {
-  return join(getWorkspace(), 'logs', 'task-status.jsonl');
-}
-
-export function getLogFilePath(): string {
-  return getLogFile();
+export function getLogDirPath(): string {
+  return getLogDir();
 }
 
 export function readAllEntries(): StatusLogEntry[] {
-  const logFile = getLogFile();
-  if (!existsSync(logFile)) return [];
-  const content = readFileSync(logFile, 'utf-8');
+  const dir = getLogDir();
+  if (!existsSync(dir)) return [];
+  const files = readdirSync(dir).filter(f => f.endsWith('.jsonl'));
   const entries: StatusLogEntry[] = [];
-  for (const line of content.trim().split('\n')) {
-    if (!line.trim()) continue;
-    try {
-      entries.push(JSON.parse(line));
-    } catch { /* skip */ }
+  for (const file of files) {
+    const content = readFileSync(join(dir, file), 'utf-8');
+    for (const line of content.trim().split('\n')) {
+      if (!line.trim()) continue;
+      try {
+        entries.push(JSON.parse(line));
+      } catch { /* skip malformed lines */ }
+    }
   }
   return entries;
 }
@@ -41,8 +36,8 @@ export function readAllEntries(): StatusLogEntry[] {
 function eventToPhase(type: string): TaskPhase {
   switch (type) {
     case 'task_start': return 'planned';
-    case 'analysis_done': return 'analyzing';
-    case 'exploration_done': return 'exploring';
+    case 'analysis_done': return 'exploring';
+    case 'exploration_done': return 'planning';
     case 'plan_approved': return 'implementing';
     case 'implementation_done': return 'testing';
     case 'test_pass': return 'creating_pr';
@@ -50,6 +45,8 @@ function eventToPhase(type: string): TaskPhase {
     case 'manual_verify_waiting': return 'waiting_manual_test';
     case 'manual_verify_done': return 'creating_pr';
     case 'pr_created': return 'done';
+    case 'pr_merged': return 'done';
+    case 'worktree_cleaned': return 'done';
     case 'skill_captured': return 'done';
     case 'blocked': return 'failed';
     // Dashboard-written events
@@ -110,7 +107,7 @@ export function deriveTasks(): ClaudeTask[] {
       issueNumber,
       phase,
       branch: last.branch || '',
-      prNumber: last.pr_number || null,
+      prNumber: last.pr_number ?? null,
       lastUpdate: last.timestamp,
       detail: last.detail || '',
       events: sorted,
@@ -121,9 +118,14 @@ export function deriveTasks(): ClaudeTask[] {
   return tasks.sort((a, b) => b.lastUpdate.localeCompare(a.lastUpdate));
 }
 
-// Watch for file changes
+// Watch for changes in the logs directory
 export function watchStatusLog(callback: () => void): () => void {
-  const logFile = getLogFile();
-  watchFile(logFile, { interval: 2000 }, callback);
-  return () => unwatchFile(logFile, callback);
+  const dir = getLogDir();
+  // fs.watch fires on any file create/modify/delete within the directory
+  const watcher = watch(dir, (_eventType, filename) => {
+    if (filename && filename.endsWith('.jsonl')) {
+      callback();
+    }
+  });
+  return () => watcher.close();
 }

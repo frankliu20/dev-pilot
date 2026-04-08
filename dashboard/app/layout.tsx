@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Engineering Dashboard",
-  description: "Personal AI engineering team — issue processing dashboard",
+  title: "Copilot Dev Dashboard",
+  description: "Dev Pilot — AI engineering team dashboard",
 };
 
 export default function RootLayout({
@@ -12,8 +12,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body>
+        {children}
+      </body>
     </html>
   );
 }

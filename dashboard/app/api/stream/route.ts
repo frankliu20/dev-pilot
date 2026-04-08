@@ -1,13 +1,23 @@
-// GET /api/stream — SSE endpoint that watches task-status.jsonl for changes
+// GET /api/stream — SSE endpoint that watches per-task log files and pending decisions
 
-import { deriveTasks } from '@/lib/statusLog';
-import { getLogFilePath } from '@/lib/statusLog';
-import { watchFile, unwatchFile, existsSync } from 'fs';
+import { deriveTasks, watchStatusLog } from '@/lib/statusLog';
+import { readPendingDecisions, watchDecisions } from '@/lib/decisions';
 
 export const runtime = 'nodejs';
 
 export async function GET() {
-  const logFile = getLogFilePath();
+  let cleanedUp = false;
+  let heartbeat: ReturnType<typeof setInterval>;
+  let stopWatchingLogs: (() => void) | null = null;
+  let stopWatchingDecisions: (() => void) | null = null;
+
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    if (stopWatchingLogs) stopWatchingLogs();
+    if (stopWatchingDecisions) stopWatchingDecisions();
+    clearInterval(heartbeat);
+  };
 
   const stream = new ReadableStream({
     start(controller) {
@@ -20,39 +30,29 @@ export async function GET() {
         } catch { /* stream closed */ }
       }
 
-      // Send initial task state
+      // Send initial state
       send('tasks', { tasks: deriveTasks() });
+      send('decisions', { decisions: readPendingDecisions() });
 
-      // Watch for file changes
-      const onChange = () => {
+      // Watch logs directory for task changes
+      // Also re-check decisions since task progress may auto-dismiss stale ones
+      stopWatchingLogs = watchStatusLog(() => {
         send('tasks', { tasks: deriveTasks() });
-      };
+        send('decisions', { decisions: readPendingDecisions() });
+      });
 
-      if (existsSync(logFile)) {
-        watchFile(logFile, { interval: 2000 }, onChange);
-      }
+      // Watch pending-decisions directory for decision changes
+      stopWatchingDecisions = watchDecisions(() => {
+        send('decisions', { decisions: readPendingDecisions() });
+      });
 
       // Heartbeat
-      const heartbeat = setInterval(() => {
+      heartbeat = setInterval(() => {
         send('heartbeat', { time: Date.now() });
       }, 30000);
-
-      // Cleanup
-      const cleanup = () => {
-        unwatchFile(logFile, onChange);
-        clearInterval(heartbeat);
-      };
-
-      // Handle cancel
-      controller.close = new Proxy(controller.close, {
-        apply(target, thisArg) {
-          cleanup();
-          return Reflect.apply(target, thisArg, []);
-        },
-      });
     },
     cancel() {
-      // cleanup handled above
+      cleanup();
     },
   });
 

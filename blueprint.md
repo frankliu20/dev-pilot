@@ -1,4 +1,4 @@
-# Personal AI Engineering Team — Blueprint
+# Dev Pilot — Blueprint
 
 ## Vision
 
@@ -6,178 +6,94 @@
 
 ## What We Have Built
 
-### Commands (6)
+### Component Organization
 
-| Command | Purpose | Status |
-|---------|---------|--------|
-| `/mod-start-of-day` | Morning sync: fetch recent PRs/commits, update project knowledge, report open issues/PRs, plan the day | ✅ Done |
-| `/mod-dev-issue` | Core workflow: issue → analyze → explore → plan → code → test → commit → PR (7 phases) | ✅ Done |
-| `/mod-watch-pr` | Monitor open PRs: auto-fix CI failures, surface review comments, notify when ready to merge | ✅ Done |
-| `/mod-status` | Dashboard: read task-status.jsonl + live GitHub data, show all task/PR states | ✅ Done |
-| `/mod-scrum-report` | Generate scrum update, post `[done]/[ongoing]/[blocker]` comments to GitHub issues | ✅ Done |
-| `/mod-准备下班` | End-of-day: summarize accomplishments, carry-over list for tomorrow, trigger knowledge capture | ✅ Done |
+Components are organized into framework (generic) and skill packs (project-specific):
 
-### Agents (6)
+---
 
-| Agent | Role | Tools | Color |
-|-------|------|-------|-------|
-| `code-explorer` | Read-only codebase analysis, find relevant files, map dependencies | Read, Grep, Glob, Bash | Yellow |
-| `test-runner` | Run tests (3 strategies), auto-fix failures (max 3 rounds), generate manual test guide | Read, Grep, Glob, Bash, Edit, Write | Red |
-| `pr-creator` | Git operations: stage, commit, push, create PR against main | Read, Grep, Glob, Bash | Blue |
-| `pr-monitor` | Check CI/review status, auto-fix CI failures, propose review comment fixes | Read, Grep, Glob, Bash, Edit, Write | Purple |
-| `skill-collector` | Extract and document reusable knowledge after each task | Read, Grep, Glob, Bash, Write, Edit | Green |
+#### Framework — Generic, installed to ~/.claude/
 
-### Skills (3)
+##### Commands
 
-| Skill | Content |
+| Command | Purpose |
+|---------|---------|
+| `/pilot-dev-issue` | Core 7-phase orchestrator: issue → analyze → explore → plan → code → test → PR. Supports `--auto` and `--test-scenario` |
+| `/pilot-watch-pr` | PR monitoring daemon: 5-min polling, auto-fix CI failures, notify Dashboard on review comments / ready-to-merge, worktree cleanup |
+
+##### Agents
+
+| Agent | Purpose |
 |-------|---------|
-| `azure-java-migration-copilot-vscode-extension` | Project-specific: build commands, directory structure, patterns, gotchas |
-| `debug-jest-failures` | Common Jest failure patterns and fixes |
-| `pattern-conventional-commits` | Commit message and PR description conventions |
+| `pilot-code-explorer` | Read-only codebase analysis, find relevant files, map dependencies. Used by Phase 2 |
+| `pilot-pr-creator` | Git operations: stage, commit, push, create PR. Used by Phase 6 |
+| `pilot-pr-reviewer` | Structured code review (🔴/🟡/🟢), interactive discussion, fix review comments |
 
-### Infrastructure
+#### Skill Packs — Project-specific, configurable
+
+##### modernize-java (Azure Java Migration Copilot)
+
+| Skill | Purpose |
+|-------|---------|
+| `mod-java-test-runner` | Run tests (strategies 1/2/3a/3b/3c), auto-fix failures (max 3 rounds), generate manual test guide |
+| `mod-java-build-intellij` | Cross-repo: build MCP server tgz → install into IntelliJ plugin → Gradle build → hand off for manual test |
+| `mod-java-telemetry-query` | Query Azure Application Insights traces for telemetry verification after testing |
+| `mod-java-benchmark-analysis` | Analyze MSBenchmark run results |
+| `mod-java-general-knowledge` | Project knowledge: build commands, directory structure, patterns, gotchas, CI details |
+
+#### Infrastructure
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
+| `pilot.yaml` | `~/.claude/pilot.yaml` | Unified config: workspace, repos, skills, AI platform, defaults |
 | `CLAUDE.md` | `~/.claude/CLAUDE.md` | Global instructions: language, safety, conventions |
-| `settings.json` | `~/.claude/settings.json` | Agent Teams enabled, permission pre-approvals |
-| `task-status.jsonl` | `<workspace>/logs/task-status.jsonl` | Persistent status log for all tasks/PRs (append-only) |
-| `scrum-history.jsonl` | `<workspace>/logs/scrum-history.jsonl` | Scrum run timestamps for delta tracking |
-| `.mod-workspace` | `~/.claude/.mod-workspace` | Workspace directory path (set by `init.js`) |
+| `settings.json` | `~/.claude/settings.json` | Permission pre-approvals |
+| `<task_id>.jsonl` | `<workspace>/logs/<task_id>.jsonl` | Per-task status log (append-only) |
+| `summary.jsonl` | `<workspace>/logs/summary.jsonl` | Cross-task summary events |
+| `worktrees/` | `<workspace>/worktrees/` | Per-issue git worktrees for parallel development |
+
+---
 
 ### Key Design Decisions
 
 1. **All config in `~/.claude/`** (user-level), not in repo — agents are personal tools, not project-specific
-2. **Skills per repo** — skill directory name matches repo name for clarity
-3. **Test strategy is user-chosen** per task — 1 (build only) / 2 (build + impacted tests) / 3 (build + tests + manual verify)
-4. **PR merge is manual** — agents never auto-merge, only notify
-5. **Issue/PR numbers rendered as full clickable URLs** in all output
-6. **Status log is JSONL** — simple, appendable, parseable, future UI-ready
-7. **Review comment fixes require user confirmation** — no silent changes
-
-## What We Want To Do Next
-
-### Phase A: Validate & Stabilize (next)
-- [ ] Run `/mod-dev-issue` on a real issue end-to-end, fix any rough edges
-- [ ] Run `/mod-start-of-day` → tune performance and output format
-- [ ] Validate status log writes correctly across all phases
-- [ ] Test `/mod-scrum-report` with real issue comments
-
-### Phase B: Automation Improvements
-- [ ] Manual test (strategy 3) → automate via Playwright E2E tests
-- [ ] `/mod-watch-pr` → integrate as a real polling loop (cron or background agent)
-- [ ] Smarter impacted test detection — trace import graph, not just co-located `.test.ts`
-- [ ] Auto-label issues based on AI analysis (area, priority)
-
-### Phase C+D (MVP): Dashboard + Multi-Issue Parallel
-
-**Goal**: Web UI + 多 agent 并行处理 issue，需要确认时 pop-up 通知用户。
-
-**Tech stack**: Next.js (TypeScript, API routes, 本地运行)
-
-**Architecture**:
-```
-┌─────────────────────────────────────────────────────────┐
-│  Next.js Dashboard (localhost:3000)                       │
-│                                                           │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐       │
-│  │ #5113   │ │ #5121   │ │ #4976   │ │ #4326   │       │
-│  │ 🟡 编码 │ │ 🟢 测试 │ │ ⚠️ 等你 │ │ ⏳ 排队 │       │
-│  └─────────┘ └─────────┘ └─────────┘ └─────────┘       │
-│                                                           │
-│  ┌─ Pop-up ──────────────────────────────────────┐      │
-│  │ ⚠️ #4976 needs your decision:                  │      │
-│  │ Test strategy? [1: Build] [2: +Tests] [3: +E2E]│      │
-│  └────────────────────────────────────────────────┘      │
-└───────────────────────┬─────────────────────────────────┘
-                        │ WebSocket (real-time updates)
-                        ▼
-┌─────────────────────────────────────────────────────────┐
-│  Orchestrator Server (Next.js API routes)                 │
-│                                                           │
-│  Task Queue: [#5113, #5121, #4976, #4326]                │
-│  Max parallel: 3                                          │
-│                                                           │
-│  Worker processes:                                        │
-│  ├─ claude -w issue-5113 --output-format stream-json     │
-│  ├─ claude -w issue-5121 --output-format stream-json     │
-│  └─ claude -w issue-4976 --output-format stream-json     │
-│     └─ (paused, waiting for user input via stdin)         │
-│                                                           │
-│  Each worker:                                             │
-│  - Runs in isolated git worktree                          │
-│  - Streams progress → parsed → written to status log     │
-│  - Needs user input → writes pending-decision.json       │
-│  - User responds in UI → piped to claude stdin            │
-└─────────────────────────────────────────────────────────┘
-
-Data flow:
-  ~/.claude/logs/task-status.jsonl  ← workers append status events
-  ~/.claude/logs/pending-decisions/ ← one file per blocked task
-  Worker stdout (stream-json)      → orchestrator parses → WebSocket → UI
-  UI user click                    → API route → worker stdin
-```
-
-**Key components**:
-1. **Dashboard page** — card per issue, color-coded status, click to expand logs
-2. **Orchestrator API** — spawn/manage claude processes, enforce max parallel
-3. **Decision queue** — when agent needs input, pop-up in UI, pipe response back
-4. **Status feed** — real-time WebSocket from task-status.jsonl to browser
-
-**Implementation plan**:
-- [ ] Scaffold Next.js project at `~/.claude/dashboard/`
-- [ ] API route: POST `/api/tasks` — add issues to queue
-- [ ] API route: GET `/api/tasks` — read task-status.jsonl, return current state
-- [ ] API route: POST `/api/decisions/:taskId` — user answers a pending decision
-- [ ] Orchestrator service: spawn `claude -w <issue> -p <prompt> --output-format stream-json`
-- [ ] Parse stream-json output to detect "asking user" patterns
-- [ ] WebSocket endpoint for real-time status push
-- [ ] Frontend: task cards + decision pop-up modal
-- [ ] Start with 2-3 parallel workers, test stability
-
-### Phase E: Team Sharing
-- [ ] Package agents + commands + skills as a Claude Code plugin
-- [ ] Project skills stay in repo (`.claude/skills/`), personal skills stay in `~/.claude/skills/`
-- [ ] Onboarding guide for teammates
-- [ ] Shared skill library with version control
-
-### Phase F: Advanced Intelligence
-- [ ] Agent learns from PR review feedback — auto-improve code quality over time
-- [ ] Predictive effort estimation based on historical task data
-- [ ] Auto-detect "this issue is similar to #XYZ" and reuse approach
-- [ ] Weekly metrics report: throughput, quality, auto-fix success rate
+2. **Source of truth in `dev-pilot/`** — commands, agents, skills live in this repo. Run `node init.js --force` to sync to `~/.claude/`
+3. **pilot.yaml as single config** — workspace path, repos, active skills, AI platform, automation defaults all in one file
+4. **Skills organized by project** — skill pack name (e.g., `modernize-java`) groups all project-specific skills under `skills/<pack>/`
+5. **Test strategy is user-chosen** per task — 1 (build only) / 2 (build + impacted tests) / 3 (build + tests + manual verify)
+6. **PR merge is manual** — agents never auto-merge, only notify
+7. **Issue/PR numbers rendered as full clickable URLs** in all output
+8. **Status log is per-task JSONL** — written by agents for dashboard consumption only. Commands/agents get status from GitHub remote (`gh` CLI), not local logs
+9. **Workspace and config separation** — `~/.claude/` stores config (commands/agents/skills), runtime data (logs, task status) lives in workspace directory (configured in `pilot.yaml`)
+10. **Git worktree concurrency** — each issue gets a worktree (`<workspace>/worktrees/issue-<N>/`), multiple issues can run in parallel without interference
 
 ## Architecture Diagram
 
 ```
 You (Human)
   │
-  ├── /mod-start-of-day ──→ Morning sync + plan
-  │
-  ├── /mod-dev-issue ──────→ Orchestrator (7 phases)
+  ├── /pilot-dev-issue ──────→ Orchestrator (7 phases)
   │     ├── Phase 0: Branch setup
   │     ├── Phase 1: Issue analysis (gh issue view)
-  │     ├── Phase 2: Code exploration (code-explorer agents × 2-3)
+  │     ├── Phase 2: Code exploration (pilot-code-explorer agents × 2-3)
   │     ├── Phase 3: Plan + test strategy (user approval gate)
   │     ├── Phase 4: Implementation
-  │     ├── Phase 5: Test & fix (test-runner agent)
-  │     ├── Phase 6: Commit & PR (pr-creator agent)
-  │     └── Phase 7: Knowledge capture (skill-collector agent)
+  │     ├── Phase 5: Test & fix (test-runner skill)
+  │     └── Phase 6: Commit & PR (pilot-pr-creator agent)
   │
-  ├── /mod-watch-pr ───────→ PR monitor (pr-monitor agent)
+  ├── /pilot-watch-pr ───────→ PR monitor (5-min polling)
   │     ├── Auto-fix CI failures
-  │     ├── Surface review comments
-  │     └── Notify ready-to-merge
+  │     ├── Notify Dashboard (review comments / ready to merge)
+  │     └── Clean up merged worktrees
   │
-  ├── /mod-status ─────────→ Dashboard (reads task-status.jsonl + GitHub)
-  │
-  ├── /mod-scrum-report ───→ Scrum update (post to GitHub issues)
-  │
-  └── /mod-准备下班 ────────→ EOD summary + knowledge capture
-  
+  └── Dashboard ─────────────→ Web UI (localhost:3000)
+        ├── Issues, PRs, Tasks, Actions tabs
+        ├── Skills & Agents browser
+        └── Report generation
+
 Data:
-  ~/.claude/logs/task-status.jsonl  ← all agents write here
-  ~/.claude/logs/scrum-history.jsonl
+  <workspace>/logs/<task_id>.jsonl  ← per-task status events
+  <workspace>/logs/summary.jsonl   ← cross-task summary events
   ~/.claude/skills/*/SKILL.md      ← knowledge grows over time
 ```
 
@@ -185,27 +101,53 @@ Data:
 
 ```
 ~/.claude/
+├── pilot.yaml                         # Unified configuration
 ├── CLAUDE.md                          # Global instructions
-├── settings.json                      # Settings + permissions + Agent Teams flag
-├── blueprint.md                       # This file
+├── settings.json                      # Settings + permissions
 ├── agents/
-│   ├── code-explorer.md
-│   ├── test-runner.md
-│   ├── pr-creator.md
-│   ├── pr-monitor.md
-│   └── skill-collector.md
+│   ├── pilot-code-explorer.md          # Codebase analysis
+│   ├── pilot-pr-creator.md             # Git & PR operations
+│   └── pilot-pr-reviewer.md            # Structured code review
 ├── commands/
-│   ├── mod-start-of-day.md
-│   ├── mod-dev-issue.md
-│   ├── mod-watch-pr.md
-│   ├── mod-status.md
-│   ├── mod-scrum-report.md
-│   └── mod-准备下班.md
-├── skills/
-│   ├── azure-java-migration-copilot-vscode-extension/SKILL.md
-│   ├── debug-jest-failures/SKILL.md
-│   └── pattern-conventional-commits/SKILL.md
+│   ├── pilot-dev-issue.md              # Core orchestrator
+│   └── pilot-watch-pr.md              # PR monitor daemon
+└── skills/
+    ├── mod-java-test-runner/SKILL.md   # Test execution & auto-fix
+    ├── mod-java-build-intellij/SKILL.md # Cross-repo IntelliJ build
+    ├── mod-java-telemetry-query/SKILL.md # Telemetry query
+    ├── mod-java-benchmark-analysis/SKILL.md # Benchmark analysis
+    └── mod-java-general-knowledge/SKILL.md  # Project knowledge
+
+<workspace>/                           # Configured in pilot.yaml
+├── <repo-name>/                       # Base repo clone
+├── worktrees/                         # Per-issue git worktrees
+│   ├── issue-5113/
+│   ├── issue-5121/
+│   └── ...
 └── logs/
-    ├── task-status.jsonl              # Created on first /mod-dev-issue run
-    └── scrum-history.jsonl            # Created on first /mod-scrum-report run
+    ├── issue-<N>.jsonl                # Per-task status log
+    ├── adhoc-<date>.jsonl             # Adhoc task status log
+    └── summary.jsonl                  # Cross-task summaries
 ```
+
+## Known Limitations
+
+- **GitHub only** — all issue/PR workflows assume GitHub. Azure DevOps, GitLab, Bitbucket are not supported.
+
+## Roadmap
+
+### Validate & Stabilize
+- [ ] Run `/pilot-dev-issue` on a real issue end-to-end, fix any rough edges
+- [ ] Validate status log writes correctly across all phases
+
+### Automation Improvements
+- [ ] Manual test (strategy 3) → automate via Playwright E2E tests
+- [ ] Smarter impacted test detection — trace import graph, not just co-located `.test.ts`
+- [ ] Auto-label issues based on AI analysis (area, priority)
+- [ ] Automated testing for framework commands and dashboard
+- [ ] Auto-manage Claude terminal sessions (lifecycle, restart on crash)
+
+### Team Sharing
+- [ ] Team sharing workflow for custom skill packs
+- [ ] Onboarding guide for teammates
+- [ ] Shared skill library with version control

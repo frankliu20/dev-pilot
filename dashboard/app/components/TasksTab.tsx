@@ -1,108 +1,232 @@
 'use client';
 
-import { ClaudeTask, TaskPhase, REPO_URL } from '@/lib/types';
-import { useState } from 'react';
+import { ClaudeTask, REPO_URL } from '@/lib/types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { PHASE_CONFIG, ACTIVE_PHASES, PHASE_PIPELINE } from '@/lib/constants';
+import { timeAgo, formatDuration, cn } from '@/lib/utils';
+import Icon from './ui/Icon';
+import Badge from './ui/Badge';
+import StatusDot from './ui/StatusDot';
+import Button from './ui/Button';
+import ConfirmDialog from './ui/ConfirmDialog';
+import EmptyState from './ui/EmptyState';
+import styles from './TasksTab.module.css';
+
+interface WorkerEntry {
+  taskId: string;
+  status: 'running' | 'completed' | 'cancelled';
+  phase?: string;
+}
 
 interface Props {
   tasks: ClaudeTask[];
   connected: boolean;
 }
 
-const PHASE_DISPLAY: Record<TaskPhase, { icon: string; text: string; color: string }> = {
-  planned: { icon: '\ud83d\udccb', text: 'Planned', color: '#6b7280' },
-  analyzing: { icon: '\ud83d\udd0d', text: 'Analyzing', color: '#3b82f6' },
-  exploring: { icon: '\ud83e\udded', text: 'Exploring', color: '#3b82f6' },
-  planning: { icon: '\ud83d\udcdd', text: 'Planning', color: '#8b5cf6' },
-  implementing: { icon: '\u2699\ufe0f', text: 'Implementing', color: '#3b82f6' },
-  testing: { icon: '\ud83e\uddea', text: 'Testing', color: '#f59e0b' },
-  test_failed: { icon: '\u274c', text: 'Test Failed', color: '#ef4444' },
-  waiting_confirm: { icon: '\u26a0\ufe0f', text: 'Waiting Confirm', color: '#f59e0b' },
-  waiting_manual_test: { icon: '\ud83d\udc40', text: 'Waiting Manual Test', color: '#f59e0b' },
-  creating_pr: { icon: '\ud83d\ude80', text: 'Creating PR', color: '#8b5cf6' },
-  done: { icon: '\u2705', text: 'Done', color: '#10b981' },
-  failed: { icon: '\ud83d\udca5', text: 'Failed', color: '#ef4444' },
-};
-
-function timeAgo(timestamp: string): string {
-  const diff = Date.now() - new Date(timestamp).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
-
 export default function TasksTab({ tasks, connected }: Props) {
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const [showAllEvents, setShowAllEvents] = useState<string | null>(null);
+  const [workers, setWorkers] = useState<Map<string, WorkerEntry>>(new Map());
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
+
+  // Poll registry for worker status
+  const fetchRegistry = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tasks/registry');
+      const data = await res.json();
+      const map = new Map<string, WorkerEntry>();
+      for (const w of data.workers || []) {
+        map.set(w.taskId, w);
+      }
+      setWorkers(map);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRegistry();
+    const timer = setInterval(fetchRegistry, 10000);
+    return () => clearInterval(timer);
+  }, [fetchRegistry]);
+
+  // Timer tick for running duration
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleCancel = async (taskId: string) => {
+    setConfirmCancel(null);
+    setCancelling(taskId);
+    try {
+      await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+      await fetchRegistry();
+    } catch {
+      // ignore
+    } finally {
+      setCancelling(null);
+    }
+  };
+
+  const runningCount = useMemo(() =>
+    Array.from(workers.values()).filter(w => w.status === 'running').length,
+    [workers]
+  );
+
+  const getPipelinePosition = (phase: string): number => {
+    const idx = PHASE_PIPELINE.indexOf(phase as any);
+    return idx >= 0 ? idx : -1;
+  };
 
   return (
-    <div className="tab-content">
-      <div className="tab-header">
-        <h2>Claude Tasks ({tasks.length})</h2>
-        <span className={`connection-dot ${connected ? 'connected' : ''}`}>
-          {connected ? 'Live' : 'Connecting...'}
-        </span>
+    <div>
+      <div className={styles.tabHeader}>
+        <h2 className={styles.tabTitle}>Claude Tasks ({tasks.length})</h2>
+        <div className={styles.headerRight}>
+          {runningCount > 0 && (
+            <span className={styles.processCount}>
+              <StatusDot variant="success" pulse size="sm" />
+              {runningCount} running
+            </span>
+          )}
+        </div>
       </div>
+
       {tasks.length === 0 ? (
-        <div className="empty">No tasks yet. Assign an issue to Claude to get started.</div>
+        <EmptyState
+          icon="cpu"
+          title="No tasks yet"
+          description="Assign an issue to Claude to get started. Tasks will appear here with real-time progress tracking."
+        />
       ) : (
-        <div className="list">
+        <div className={styles.list}>
           {tasks.map(task => {
-            const display = PHASE_DISPLAY[task.phase] || PHASE_DISPLAY.planned;
+            const config = PHASE_CONFIG[task.phase] || PHASE_CONFIG.planned;
             const expanded = expandedTask === task.taskId;
+            const worker = workers.get(task.taskId);
+            const isRunning = worker?.status === 'running';
+            const isActive = ACTIVE_PHASES.has(task.phase);
+            const pipelinePos = getPipelinePosition(task.phase);
+            const isFailed = task.phase === 'failed' || task.phase === 'test_failed';
+
+            // Running duration
+            const firstEvent = task.events[0];
+            const runningMs = isRunning && firstEvent
+              ? now - new Date(firstEvent.timestamp).getTime()
+              : 0;
+
+            const eventsToShow = showAllEvents === task.taskId
+              ? task.events.slice().reverse()
+              : task.events.slice().reverse().slice(0, 10);
+
             return (
               <div
                 key={task.taskId}
-                className="list-item task-item"
-                style={{ borderLeftColor: display.color }}
+                className={styles.taskCard}
+                style={{ borderLeftColor: `var(--color-${config.color}-emphasis)` }}
                 onClick={() => setExpandedTask(expanded ? null : task.taskId)}
               >
-                <div className="item-main">
+                <div className={styles.taskMain}>
                   {task.issueNumber ? (
                     <a
                       href={`${REPO_URL}/issues/${task.issueNumber}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="item-number"
+                      className={styles.issueNumber}
                       onClick={e => e.stopPropagation()}
                     >
                       #{task.issueNumber}
                     </a>
                   ) : (
-                    <span className="item-number">{task.taskId}</span>
+                    <span className={styles.issueNumber}>{task.taskId}</span>
                   )}
-                  <span className="task-phase" style={{ color: display.color }}>
-                    {display.icon} {display.text}
+                  <span className={styles.phaseInfo} style={{ color: `var(--color-${config.color}-fg)` }}>
+                    <Icon name={config.icon} size={14} />
+                    {config.label}
                   </span>
+                  {isRunning && (
+                    <Badge variant="success" size="sm">
+                      <StatusDot variant="success" pulse size="sm" /> active
+                    </Badge>
+                  )}
                   {task.prNumber && (
                     <a
                       href={`${REPO_URL}/pull/${task.prNumber}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="pr-link"
+                      className={styles.prLink}
                       onClick={e => e.stopPropagation()}
                     >
                       PR #{task.prNumber}
                     </a>
                   )}
+                  {isRunning && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); setConfirmCancel(task.taskId); }}
+                      disabled={cancelling === task.taskId}
+                      style={{ marginLeft: 'auto' }}
+                    >
+                      {cancelling === task.taskId ? 'Cancelling...' : 'Cancel'}
+                    </Button>
+                  )}
                 </div>
-                <div className="item-meta">
-                  <span className="task-detail">{task.detail}</span>
-                  <span className="task-time">{timeAgo(task.lastUpdate)}</span>
-                </div>
-                {expanded && (
-                  <div className="task-events">
-                    <div className="events-title">Event Log ({task.events.length})</div>
-                    {task.events.slice().reverse().slice(0, 20).map((ev, i) => (
-                      <div key={i} className="event-line">
-                        <span className="event-time">
-                          {new Date(ev.timestamp).toLocaleTimeString()}
-                        </span>
-                        <span className="event-type">{ev.type}</span>
-                        <span className="event-detail">{ev.detail}</span>
-                      </div>
+
+                {/* Progress pipeline */}
+                {isActive && pipelinePos >= 0 && (
+                  <div className={styles.pipeline}>
+                    {PHASE_PIPELINE.map((p, i) => (
+                      <div
+                        key={p}
+                        className={cn(
+                          styles.pipelineStep,
+                          i < pipelinePos && styles.completed,
+                          i === pipelinePos && (isFailed ? styles.failed : styles.current),
+                        )}
+                      />
                     ))}
+                  </div>
+                )}
+
+                <div className={styles.taskMeta}>
+                  <span className={styles.taskDetail}>{task.detail}</span>
+                  <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                    {isRunning && runningMs > 0 && (
+                      <span className={styles.runningTimer}>
+                        <Icon name="clock" size={10} />
+                        {formatDuration(runningMs)}
+                      </span>
+                    )}
+                    <span className={styles.taskTime}>{timeAgo(task.lastUpdate)}</span>
+                  </div>
+                </div>
+
+                {expanded && (
+                  <div className={styles.events}>
+                    <div className={styles.eventsTitle}>Event Log ({task.events.length})</div>
+                    <div className={styles.timeline}>
+                      {eventsToShow.map((ev, i) => (
+                        <div key={i} className={styles.timelineEvent}>
+                          <span className={styles.eventTime}>
+                            {new Date(ev.timestamp).toLocaleTimeString()}
+                          </span>
+                          <span className={styles.eventType}>{ev.type}</span>
+                          <span className={styles.eventDetail}>{ev.detail}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {task.events.length > 10 && showAllEvents !== task.taskId && (
+                      <button
+                        className={styles.showAll}
+                        onClick={e => { e.stopPropagation(); setShowAllEvents(task.taskId); }}
+                      >
+                        Show all {task.events.length} events
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -110,6 +234,17 @@ export default function TasksTab({ tasks, connected }: Props) {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmCancel}
+        title="Cancel Task"
+        message="Are you sure you want to cancel this running task? The Claude process will be terminated."
+        confirmLabel="Cancel Task"
+        cancelLabel="Keep Running"
+        variant="danger"
+        onConfirm={() => confirmCancel && handleCancel(confirmCancel)}
+        onCancel={() => setConfirmCancel(null)}
+      />
     </div>
   );
 }

@@ -1,0 +1,104 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--duration-normal) var(--ease-out);
+  outline: none;
+}
+.button:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-accent);
+}
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Size variants */
+.sm {
+  padding: 4px 10px;
+  font-size: var(--text-xs);
+  height: 28px;
+}
+.md {
+  padding: 6px 14px;
+  font-size: var(--text-sm);
+  height: 32px;
+}
+.lg {
+  padding: 10px 20px;
+  font-size: var(--text-base);
+  height: 40px;
+}
+
+/* Style variants */
+.primary {
+  background: var(--color-purple-emphasis);
+  color: var(--color-fg-on-emphasis);
+  border-color: var(--color-purple-emphasis);
+}
+.primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.secondary {
+  background: var(--color-bg-emphasis);
+  color: var(--color-fg-default);
+  border-color: var(--color-border-default);
+}
+.secondary:hover:not(:disabled) {
+  background: var(--color-bg-muted);
+  border-color: var(--color-border-emphasis);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-fg-muted);
+  border-color: transparent;
+}
+.ghost:hover:not(:disabled) {
+  background: var(--color-bg-emphasis);
+  color: var(--color-fg-default);
+}
+
+.danger {
+  background: transparent;
+  color: var(--color-danger-fg);
+  border-color: var(--color-danger-border);
+}
+.danger:hover:not(:disabled) {
+  background: var(--color-danger-bg);
+}
+
+.warning {
+  background: var(--color-warning-emphasis);
+  color: #000;
+  border-color: var(--color-warning-emphasis);
+}
+.warning:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.info {
+  background: var(--color-info-emphasis);
+  color: var(--color-fg-on-emphasis);
+  border-color: var(--color-info-emphasis);
+}
+.info:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+/* Icon-only button */
+.iconOnly {
+  padding: 0;
+  width: 32px;
+}
+.iconOnly.sm { width: 28px; }
+.iconOnly.lg { width: 40px; }
