@@ -365,7 +365,31 @@ async function main() {
   }
   console.log('');
 
-  // 8. Clone repos (optional)
+  // 8. Install git hooks into this repo
+  console.log('Git hooks:');
+  const hooksSrc = path.join(SRC_DIR, 'framework', 'hooks');
+  const selfGitHooks = path.join(SRC_DIR, '.git', 'hooks');
+  if (fs.existsSync(hooksSrc) && fs.existsSync(selfGitHooks)) {
+    const hookFiles = fs.readdirSync(hooksSrc).filter(f => !f.startsWith('.'));
+    for (const hookFile of hookFiles) {
+      const dest = path.join(selfGitHooks, hookFile);
+      const src = path.join(hooksSrc, hookFile);
+      if (fs.existsSync(dest) && !force) {
+        console.log(`  [SKIP]   .git/hooks/${hookFile} (already exists)`);
+        skipped++;
+      } else {
+        fs.copyFileSync(src, dest);
+        try { fs.chmodSync(dest, 0o755); } catch { /* Windows may not support chmod */ }
+        console.log(`  [INSTALL] .git/hooks/${hookFile}`);
+        installed++;
+      }
+    }
+  } else {
+    console.log('  (no hooks found)');
+  }
+  console.log('');
+
+  // 9. Clone repos (optional)
   if (config.repos && config.repos.length > 0) {
     console.log('Repos:');
     for (const repo of config.repos) {

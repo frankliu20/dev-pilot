@@ -1,0 +1,18 @@
+#!/bin/bash
+# Pre-push hook: block direct pushes to main/master
+
+protected_branches="main master"
+
+while read local_ref local_sha remote_ref remote_sha; do
+  for branch in $protected_branches; do
+    if [ "$remote_ref" = "refs/heads/$branch" ]; then
+      echo ""
+      echo "🚫 Direct push to '$branch' is blocked."
+      echo "   Create a feature branch and open a PR instead."
+      echo ""
+      exit 1
+    fi
+  done
+done
+
+exit 0
