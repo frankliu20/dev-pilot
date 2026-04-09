@@ -50,8 +50,8 @@ export function getConfig(): PilotConfig {
       ai_platform: 'copilot-cli',
       defaults: {
         dev_issue_mode: 'normal',
-        review_pr_mode: 'auto',
-        fix_comment_mode: 'auto',
+        review_pr_mode: 'normal',
+        fix_comment_mode: 'normal',
         review_min_severity: 'medium',
       },
       build: {

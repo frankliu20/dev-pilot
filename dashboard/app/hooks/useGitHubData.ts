@@ -2,11 +2,12 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-export function useGitHubData<T>(url: string, interval = 30000) {
+export function useGitHubData<T>(url: string) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch(url);
       const json = await res.json();
@@ -20,9 +21,7 @@ export function useGitHubData<T>(url: string, interval = 30000) {
 
   useEffect(() => {
     fetchData();
-    const timer = setInterval(fetchData, interval);
-    return () => clearInterval(timer);
-  }, [fetchData, interval]);
+  }, [fetchData]);
 
   return { data, loading, refresh: fetchData };
 }

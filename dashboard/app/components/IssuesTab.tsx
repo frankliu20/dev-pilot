@@ -27,6 +27,7 @@ interface Props {
   onRefresh: () => void;
   onAssign: (issue: GHIssue, mode: FixMode, force?: boolean, testScenario?: TestScenario) => void;
   onClean: (issue: GHIssue) => void;
+  skills?: string[];
 }
 
 const PHASE_ORDER: Record<TaskPhase, number> = {
@@ -36,7 +37,8 @@ const PHASE_ORDER: Record<TaskPhase, number> = {
   planned: 9, done: 10, failed: 11,
 };
 
-export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign, onClean }: Props) {
+export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign, onClean, skills = [] }: Props) {
+  const hasModJava = skills.includes('modernize-java');
   const [modes, setModes] = useState<Map<number, FixMode>>(new Map());
   const [scenarios, setScenarios] = useState<Map<number, TestScenario>>(new Map());
   const [search, setSearch] = useState('');
@@ -47,7 +49,7 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
   const [issueBodyCache, setIssueBodyCache] = useState<Map<number, string | null>>(new Map());
   const [loadingBody, setLoadingBody] = useState<number | null>(null);
 
-  const getMode = (n: number): FixMode => modes.get(n) || 'auto';
+  const getMode = (n: number): FixMode => modes.get(n) || 'normal';
   const setMode = (n: number, m: FixMode) => setModes(prev => new Map(prev).set(n, m));
   const getScenario = (n: number): TestScenario => scenarios.get(n) || 'vscode';
   const setScenario = (n: number, s: TestScenario) => setScenarios(prev => new Map(prev).set(n, s));
@@ -226,7 +228,7 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
               <SortHeader sKey="title">Title</SortHeader>
               <SortHeader sKey="status">Status</SortHeader>
               <th className={styles.colMode}>Mode</th>
-              <th className={styles.colTest}>Test</th>
+              {hasModJava && <th className={styles.colTest}>Test</th>}
               <th className={styles.colAction}>Action</th>
             </tr>
           </thead>
@@ -303,26 +305,28 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
                         <option value="auto">Auto</option>
                       </Select>
                     </td>
-                    <td className={styles.colTest} onClick={e => e.stopPropagation()}>
-                      <Select
-                        size_="sm"
-                        value={getScenario(issue.number)}
-                        onChange={e => setScenario(issue.number, e.target.value as TestScenario)}
-                        disabled={isActive}
-                      >
-                        <option value="vscode">VS Code</option>
-                        <option value="intellij">IntelliJ</option>
-                        <option value="mcp-server">MCP Server</option>
-                      </Select>
-                    </td>
+                    {hasModJava && (
+                      <td className={styles.colTest} onClick={e => e.stopPropagation()}>
+                        <Select
+                          size_="sm"
+                          value={getScenario(issue.number)}
+                          onChange={e => setScenario(issue.number, e.target.value as TestScenario)}
+                          disabled={isActive}
+                        >
+                          <option value="vscode">VS Code</option>
+                          <option value="intellij">IntelliJ</option>
+                          <option value="mcp-server">MCP Server</option>
+                        </Select>
+                      </td>
+                    )}
                     <td className={styles.colAction} onClick={e => e.stopPropagation()}>
                       <div className={styles.actionGroup}>
                         {isActive ? (
                           <Button variant="secondary" size="sm" disabled>Running</Button>
                         ) : isDone ? (
-                          <Button variant="warning" size="sm" onClick={() => onAssign(issue, getMode(issue.number), true, getScenario(issue.number))}>Re-run</Button>
+                          <Button variant="warning" size="sm" onClick={() => onAssign(issue, getMode(issue.number), true, hasModJava ? getScenario(issue.number) : undefined)}>Re-run</Button>
                         ) : (
-                          <Button variant="primary" size="sm" onClick={() => onAssign(issue, getMode(issue.number), false, getScenario(issue.number))}>Assign</Button>
+                          <Button variant="primary" size="sm" onClick={() => onAssign(issue, getMode(issue.number), false, hasModJava ? getScenario(issue.number) : undefined)}>Assign</Button>
                         )}
                         <Tooltip content="Clean log & worktree">
                           <button
@@ -338,7 +342,7 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
                   </tr>
                   {isExpanded && (
                     <tr className={styles.expandedRow}>
-                      <td colSpan={6}>
+                      <td colSpan={hasModJava ? 6 : 5}>
                         <div className={styles.issueBody}>
                           {isBodyLoading ? (
                             <Skeleton count={4} gap={10} />

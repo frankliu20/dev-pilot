@@ -94,11 +94,29 @@ gh pr view <number> --repo $OWNER/$REPO_NAME \
 # Full diff
 gh pr diff <number> --repo $OWNER/$REPO_NAME
 
-# Open review comments (unresolved)
+# Open review comments (unresolved) — REST API
 gh api repos/$OWNER/$REPO_NAME/pulls/<number>/comments \
   --jq '[.[] | {id: .id, path: .path, line: .line, body: .body, author: .user.login, created_at: .created_at}]'
 
-# Review threads (to find unresolved ones)
+# Review threads with node IDs (needed for resolving conversations) — GraphQL
+gh api graphql -f query='
+query($owner:String!,$repo:String!,$number:Int!) {
+  repository(owner:$owner,name:$repo) {
+    pullRequest(number:$number) {
+      reviewThreads(first:100) {
+        nodes {
+          id
+          isResolved
+          comments(first:5) {
+            nodes { id body author { login } path line }
+          }
+        }
+      }
+    }
+  }
+}' -f owner="$OWNER" -f repo="$REPO_NAME" -F number=<number>
+
+# Reviews summary
 gh api repos/$OWNER/$REPO_NAME/pulls/<number>/reviews \
   --jq '[.[] | {id: .id, state: .state, body: .body, author: .user.login}]'
 ```
@@ -203,6 +221,31 @@ When the user asks to fix a comment:
    gh api repos/$OWNER/$REPO_NAME/pulls/<number>/comments/<comment-id>/replies \
      -f body="Fixed in $(git rev-parse --short HEAD)."
    ```
+6. **Resolve the conversation** on GitHub:
+
+   The strategy (from the prompt flags) determines how to handle resolution:
+
+   **Strategy: `auto`** — resolve automatically via GraphQL:
+   ```bash
+   # Use the thread node ID from the GraphQL query in Step 1
+   gh api graphql -f query='
+   mutation($threadId:ID!) {
+     resolveReviewThread(input:{threadId:$threadId}) {
+       thread { isResolved }
+     }
+   }' -f threadId="<thread-node-id>"
+   ```
+   Log which threads were resolved in the reply to the user.
+
+   **Strategy: `normal`** — remind the user to resolve manually:
+   After fixing and replying, tell the user:
+   ```
+   ✅ Fixed and replied. Please resolve the conversation on GitHub:
+   https://github.com/$OWNER/$REPO_NAME/pull/<number>
+   ```
+   Do NOT auto-resolve in normal strategy — the user controls what gets resolved.
+
+   **Strategy: `quick-approve`** — same as `auto` (resolve automatically).
 
 ## Rules
 

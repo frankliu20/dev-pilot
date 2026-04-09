@@ -67,12 +67,21 @@ function DashboardInner() {
   const [cleaning, setCleaning] = useState(false);
   const [showOffWork, setShowOffWork] = useState(false);
   const [cliTool, setCliTool] = useState<CliTool>('claude');
+  const [skills, setSkills] = useState<string[]>([]);
 
   // Hydrate from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
     const stored = localStorage.getItem('cliTool') as CliTool | null;
     if (stored && stored !== cliTool) setCliTool(stored);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch skill pack config on mount
+  useEffect(() => {
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(data => setSkills(data.skills || []))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -83,9 +92,9 @@ function DashboardInner() {
   const { toast } = useToast();
 
   const { data: issueData, loading: issuesLoading, refresh: refreshIssues } =
-    useGitHubData<IssueData>('/api/issues', 30000);
+    useGitHubData<IssueData>('/api/issues');
   const { data: prData, loading: prsLoading, refresh: refreshPRs } =
-    useGitHubData<PRData>('/api/prs', 30000);
+    useGitHubData<PRData>('/api/prs');
   const { tasks, decisions, connected } = useTaskStream();
 
   const cliDisplayName = CLI_TOOL_CONFIG[cliTool].displayName;
@@ -310,6 +319,8 @@ function DashboardInner() {
     [prData]
   );
 
+  const hasModJava = skills.includes('modernize-java');
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     '1': () => setTab('issues'),
@@ -412,7 +423,9 @@ function DashboardInner() {
 
       {/* Tabs */}
       <nav className={styles.tabs}>
-        {TAB_CONFIG.map(t => (
+        {TAB_CONFIG
+          .filter(t => t.key !== 'troubleshoot' || hasModJava)
+          .map(t => (
           <button
             key={t.key}
             className={cn(styles.tab, tab === t.key && styles.active)}
@@ -451,6 +464,7 @@ function DashboardInner() {
             onRefresh={refreshIssues}
             onAssign={handleAssign}
             onClean={handleCleanIssue}
+            skills={skills}
           />
         )}
         {tab === 'prs' && (

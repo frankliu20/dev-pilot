@@ -315,7 +315,9 @@ After plan approval:
 
 ## Phase 5: Test & Fix
 
-Launch the **test-runner skill** (from the activated skill pack) with the chosen test strategy. If no test-runner skill is available, execute the strategies inline:
+Check if a test-runner skill is available by looking for `~/.claude/skills/mod-java-test-runner/SKILL.md`:
+- If it exists → launch `/mod-java-test-runner` with the chosen test strategy and relevant context (changed files, test strategy number, scenario id if applicable)
+- If it does NOT exist → execute the strategies inline as described below
 
 ### Strategy 1 — Build Only (default):
 - Run the build command from `~/.claude/pilot.yaml` (`build.command`, default: `npm run build`)

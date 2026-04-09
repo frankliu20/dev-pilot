@@ -4,16 +4,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { openClaudeTerminal } from '@/lib/terminal';
 import { REPO, CliTool } from '@/lib/types';
 
+type FixMode = 'normal' | 'auto';
+
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { prNumber, cliTool = 'claude' } = body as { prNumber: number; cliTool?: CliTool };
+  const { prNumber, mode = 'normal', cliTool = 'claude' } = body as {
+    prNumber: number;
+    mode?: FixMode;
+    cliTool?: CliTool;
+  };
 
   if (!prNumber || typeof prNumber !== 'number') {
     return NextResponse.json({ error: 'Missing prNumber' }, { status: 400 });
   }
 
   const prUrl = `https://github.com/${REPO}/pull/${prNumber}`;
-  const customPrompt = `/pilot-dev-issue --auto check open comments on ${prUrl} and fix them`;
+  const autoFlag = mode === 'auto' ? ' --auto' : '';
+  const customPrompt = `/pilot-dev-issue${autoFlag} check open comments on ${prUrl} and fix them`;
 
   const termResult = openClaudeTerminal({
     customPrompt,

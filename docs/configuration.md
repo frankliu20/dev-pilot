@@ -1,0 +1,105 @@
+# Configuration Guide
+
+Dev Pilot is configured through two files in `~/.claude/`:
+
+| File | Purpose |
+|------|---------|
+| `pilot.yaml` | Project settings — workspace, repos, skills, defaults |
+| `settings.json` | Claude Code permissions (not managed by init.js) |
+
+## pilot.yaml
+
+Created by `node init.js` during installation. Location: `~/.claude/pilot.yaml`
+
+```yaml
+workspace: ~/claude/workspace
+
+repos:
+  - your-org/your-repo
+
+skills:
+  - modernize-java          # Activate skill packs
+
+ai_platform: copilot-cli    # copilot-cli or claude-code
+
+defaults:
+  dev_issue_mode: normal     # normal or auto
+  review_pr_mode: auto       # auto or normal
+  fix_comment_mode: auto     # auto or normal
+  review_min_severity: medium # high, medium, or low
+
+# build:
+#   command: npm run build
+#   test_command: npx jest --testPathPattern={{file}} --no-coverage
+#   default_branch: main
+```
+
+### Field Reference
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `workspace` | string | `~/claude/workspace` | Root directory for cloned repos. Tilde (`~`) is expanded |
+| `repos` | string[] | `[]` | GitHub repos in `owner/repo` format |
+| `skills` | string[] | `[]` | Skill pack names to activate (must match directories under `skills/`) |
+| `ai_platform` | string | `copilot-cli` | CLI tool: `claude-code` or `copilot-cli` |
+| `defaults.dev_issue_mode` | string | `normal` | Default mode for `/pilot-dev-issue` (`normal` = interactive, `auto` = unattended) |
+| `defaults.review_pr_mode` | string | `auto` | Default mode for PR review tasks |
+| `defaults.fix_comment_mode` | string | `auto` | Default mode for fixing review comments |
+| `defaults.review_min_severity` | string | `medium` | Minimum severity threshold for PR reviews |
+| `build.command` | string | — | Custom build command (overrides skill pack defaults) |
+| `build.test_command` | string | — | Custom test command. `{{file}}` is replaced with the test file path |
+| `build.default_branch` | string | `main` | Default branch for git operations |
+
+### Preset Configs
+
+Use `--config` flag with a preset file:
+
+```bash
+node init.js --config modernize-java-pilot.yaml
+```
+
+Preset files live in the repo root and provide pre-filled values for specific projects.
+
+## settings.json
+
+Claude Code's permission file. The init script does **not** copy or modify this file — you must configure it manually.
+
+Location: `~/.claude/settings.json`
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx jest*)",
+      "Bash(npm run build*)",
+      "Bash(npm run test*)",
+      "Bash(npm run lint*)",
+      "Bash(git *)",
+      "Bash(gh *)"
+    ]
+  }
+}
+```
+
+### Recommended Permissions
+
+| Permission | Why |
+|-----------|-----|
+| `Bash(npx jest*)` | Test runner execution |
+| `Bash(npm run build*)` | Build commands |
+| `Bash(npm run test*)` | Test scripts |
+| `Bash(npm run lint*)` | Linting |
+| `Bash(git *)` | Git operations (commit, push, branch) |
+| `Bash(gh *)` | GitHub CLI (issues, PRs, API calls) |
+
+Add project-specific permissions as needed (e.g., `Bash(mvn *)` for Java projects).
+
+## Environment Variables
+
+The dashboard and lib modules also read these environment variables:
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `PILOT_WORKSPACE` | `lib/config.ts` | Override workspace path (takes precedence over pilot.yaml) |
+| `NEXT_PUBLIC_GITHUB_REPO` | `lib/config.ts` | Override primary repo (takes precedence over pilot.yaml) |
+| `REVIEW_REPOS` | `lib/types.ts` | JSON array of repos for review-requested PR fetching |
