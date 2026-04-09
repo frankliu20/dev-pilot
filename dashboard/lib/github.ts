@@ -159,11 +159,13 @@ export function classifyPRAction(pr: GHPR): PRAction {
   if (pr.isDraft) return 'draft';
 
   const ciState = pr.statusCheckRollup?.length
-    ? pr.statusCheckRollup.every(c => c.state === 'SUCCESS')
+    ? pr.statusCheckRollup.every(c => c.conclusion === 'SUCCESS' || c.conclusion === 'NEUTRAL' || c.conclusion === 'SKIPPED')
       ? 'pass'
-      : pr.statusCheckRollup.some(c => c.state === 'FAILURE')
+      : pr.statusCheckRollup.some(c => c.conclusion === 'FAILURE')
         ? 'fail'
-        : 'pending'
+        : pr.statusCheckRollup.some(c => c.status !== 'COMPLETED')
+          ? 'pending'
+          : 'pass'
     : 'pending';
 
   if (ciState === 'fail') return 'ci_failing';
@@ -250,7 +252,7 @@ export async function fetchRecentPRs(): Promise<ReportPR[]> {
           createdAt: string;
           mergedAt: string;
           reviewDecision: string;
-          statusCheckRollup: { state: string }[];
+          statusCheckRollup: { status: string; conclusion: string }[];
         }>;
         return prs.map(pr => ({
           number: pr.number,
@@ -260,11 +262,13 @@ export async function fetchRecentPRs(): Promise<ReportPR[]> {
           mergedAt: pr.mergedAt || '',
           reviewDecision: pr.reviewDecision || '',
           ciStatus: pr.statusCheckRollup?.length
-            ? pr.statusCheckRollup.every(c => c.state === 'SUCCESS')
+            ? pr.statusCheckRollup.every(c => c.conclusion === 'SUCCESS' || c.conclusion === 'NEUTRAL' || c.conclusion === 'SKIPPED')
               ? 'pass'
-              : pr.statusCheckRollup.some(c => c.state === 'FAILURE')
+              : pr.statusCheckRollup.some(c => c.conclusion === 'FAILURE')
                 ? 'fail'
-                : 'pending'
+                : pr.statusCheckRollup.some(c => c.status !== 'COMPLETED')
+                  ? 'pending'
+                  : 'pass'
             : 'unknown',
           repo,
         }));

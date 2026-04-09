@@ -78,32 +78,35 @@ describe('classifyPRAction', () => {
   it('returns "draft" for draft PRs even with CI failures', () => {
     expect(classifyPRAction(makePR({
       isDraft: true,
-      statusCheckRollup: [{ state: 'FAILURE' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'FAILURE' }],
     }))).toBe('draft');
   });
 
   it('returns "ci_failing" when any check has FAILURE', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }, { state: 'FAILURE' }],
+      statusCheckRollup: [
+        { status: 'COMPLETED', conclusion: 'SUCCESS' },
+        { status: 'COMPLETED', conclusion: 'FAILURE' },
+      ],
     }))).toBe('ci_failing');
   });
 
   it('returns "ci_failing" when all checks are FAILURE', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'FAILURE' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'FAILURE' }],
     }))).toBe('ci_failing');
   });
 
   it('returns "changes_requested" when reviewDecision is CHANGES_REQUESTED', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: 'CHANGES_REQUESTED',
     }))).toBe('changes_requested');
   });
 
   it('returns "has_unresolved_comments" when unresolvedThreadCount > 0', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: 'APPROVED',
       unresolvedThreadCount: 3,
     }))).toBe('has_unresolved_comments');
@@ -111,14 +114,14 @@ describe('classifyPRAction', () => {
 
   it('returns "ready_to_merge" when CI passes and approved', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: 'APPROVED',
     }))).toBe('ready_to_merge');
   });
 
   it('returns "ready_to_merge" with unresolvedThreadCount=0', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: 'APPROVED',
       unresolvedThreadCount: 0,
     }))).toBe('ready_to_merge');
@@ -126,21 +129,21 @@ describe('classifyPRAction', () => {
 
   it('returns "review_pending" when reviewDecision is REVIEW_REQUIRED', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: 'REVIEW_REQUIRED',
     }))).toBe('review_pending');
   });
 
   it('returns "review_pending" when reviewDecision is empty string', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: '',
     }))).toBe('review_pending');
   });
 
   it('returns "waiting" when CI is pending and approved', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'PENDING' }],
+      statusCheckRollup: [{ status: 'IN_PROGRESS', conclusion: '' }],
       reviewDecision: 'APPROVED',
     }))).toBe('waiting');
   });
@@ -162,14 +165,14 @@ describe('classifyPRAction', () => {
   // Priority order tests
   it('ci_failing takes priority over changes_requested', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'FAILURE' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'FAILURE' }],
       reviewDecision: 'CHANGES_REQUESTED',
     }))).toBe('ci_failing');
   });
 
   it('changes_requested takes priority over has_unresolved_comments', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: 'CHANGES_REQUESTED',
       unresolvedThreadCount: 5,
     }))).toBe('changes_requested');
@@ -177,7 +180,7 @@ describe('classifyPRAction', () => {
 
   it('has_unresolved_comments takes priority over ready_to_merge', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: 'APPROVED',
       unresolvedThreadCount: 1,
     }))).toBe('has_unresolved_comments');
@@ -185,30 +188,57 @@ describe('classifyPRAction', () => {
 
   it('treats all SUCCESS checks as CI pass', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }, { state: 'SUCCESS' }, { state: 'SUCCESS' }],
+      statusCheckRollup: [
+        { status: 'COMPLETED', conclusion: 'SUCCESS' },
+        { status: 'COMPLETED', conclusion: 'SUCCESS' },
+        { status: 'COMPLETED', conclusion: 'SUCCESS' },
+      ],
       reviewDecision: 'APPROVED',
     }))).toBe('ready_to_merge');
   });
 
-  it('treats mixed SUCCESS/PENDING as pending CI', () => {
+  it('treats mixed COMPLETED/IN_PROGRESS as pending CI', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }, { state: 'PENDING' }],
+      statusCheckRollup: [
+        { status: 'COMPLETED', conclusion: 'SUCCESS' },
+        { status: 'IN_PROGRESS', conclusion: '' },
+      ],
       reviewDecision: 'APPROVED',
     }))).toBe('waiting');
   });
 
   it('returns "ci_failing" even when approved if CI fails', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'FAILURE' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'FAILURE' }],
       reviewDecision: 'APPROVED',
     }))).toBe('ci_failing');
   });
 
   it('treats undefined unresolvedThreadCount as no unresolved comments', () => {
     expect(classifyPRAction(makePR({
-      statusCheckRollup: [{ state: 'SUCCESS' }],
+      statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }],
       reviewDecision: 'APPROVED',
       unresolvedThreadCount: undefined,
+    }))).toBe('ready_to_merge');
+  });
+
+  it('treats NEUTRAL conclusion as CI pass', () => {
+    expect(classifyPRAction(makePR({
+      statusCheckRollup: [
+        { status: 'COMPLETED', conclusion: 'SUCCESS' },
+        { status: 'COMPLETED', conclusion: 'NEUTRAL' },
+      ],
+      reviewDecision: 'APPROVED',
+    }))).toBe('ready_to_merge');
+  });
+
+  it('treats SKIPPED conclusion as CI pass', () => {
+    expect(classifyPRAction(makePR({
+      statusCheckRollup: [
+        { status: 'COMPLETED', conclusion: 'SUCCESS' },
+        { status: 'COMPLETED', conclusion: 'SKIPPED' },
+      ],
+      reviewDecision: 'APPROVED',
     }))).toBe('ready_to_merge');
   });
 });

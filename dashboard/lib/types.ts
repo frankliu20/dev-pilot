@@ -35,7 +35,7 @@ export interface GHPR {
   isDraft: boolean;
   createdAt: string;
   reviewDecision: string; // APPROVED | CHANGES_REQUESTED | REVIEW_REQUIRED | ""
-  statusCheckRollup: { state: string }[]; // SUCCESS | FAILURE | PENDING
+  statusCheckRollup: { status: string; conclusion: string }[]; // status: COMPLETED|IN_PROGRESS|QUEUED; conclusion: SUCCESS|FAILURE|NEUTRAL|...
   url: string;
   body: string;
   comments: { totalCount: number };
