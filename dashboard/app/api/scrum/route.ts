@@ -93,11 +93,13 @@ export async function GET() {
     const action = classifyPRAction(pr);
     const isBlocker = action === 'ci_failing' || action === 'changes_requested';
     const ciLabel = pr.statusCheckRollup?.length
-      ? pr.statusCheckRollup.every(c => c.state === 'SUCCESS')
+      ? pr.statusCheckRollup.every(c => c.conclusion === 'SUCCESS' || c.conclusion === 'NEUTRAL' || c.conclusion === 'SKIPPED')
         ? 'CI passing'
-        : pr.statusCheckRollup.some(c => c.state === 'FAILURE')
+        : pr.statusCheckRollup.some(c => c.conclusion === 'FAILURE')
           ? 'CI failing'
-          : 'CI pending'
+          : pr.statusCheckRollup.some(c => c.status !== 'COMPLETED')
+            ? 'CI pending'
+            : 'CI passing'
       : 'CI unknown';
     const reviewLabel = pr.reviewDecision === 'APPROVED'
       ? 'approved'
