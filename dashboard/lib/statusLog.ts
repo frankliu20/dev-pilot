@@ -33,7 +33,7 @@ export function readAllEntries(): StatusLogEntry[] {
 }
 
 // Map event type to task phase
-function eventToPhase(type: string): TaskPhase {
+function eventToPhase(type: string): TaskPhase | null {
   switch (type) {
     case 'task_start': return 'planned';
     case 'analysis_done': return 'exploring';
@@ -51,6 +51,9 @@ function eventToPhase(type: string): TaskPhase {
     case 'blocked': return 'failed';
     // Dashboard-written events
     case 'phase_change': return 'planned'; // will be overridden by phase field
+    // Non-phase-changing events — return null to keep previous phase
+    case 'decision_requested': return null;
+    case 'decision_dismissed': return null;
     default: return 'planned';
   }
 }
@@ -68,16 +71,25 @@ export function deriveTasks(): ClaudeTask[] {
   const tasks: ClaudeTask[] = [];
   for (const [taskId, events] of taskMap) {
     const sorted = events.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
-    const last = sorted[sorted.length - 1];
+
+    // Find last event that affects phase (skip decision_requested/decision_dismissed)
+    let last = sorted[sorted.length - 1];
+    let phaseEvent = last;
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      if (eventToPhase(sorted[i].type) !== null) {
+        phaseEvent = sorted[i];
+        break;
+      }
+    }
 
     // Extract issue number from task_id like "issue-5126"
     const issueMatch = taskId.match(/^issue-(\d+)$/);
     const issueNumber = issueMatch ? parseInt(issueMatch[1]) : null;
 
-    // Determine phase from last event
-    let phase = eventToPhase(last.type);
+    // Determine phase from last phase-changing event
+    let phase = eventToPhase(phaseEvent.type) || 'planned';
     // If the event has a phase field that maps better, use it
-    if (last.phase) {
+    if (phaseEvent.phase) {
       const phaseMap: Record<string, TaskPhase> = {
         'branch_setup': 'planned',
         'analysis': 'analyzing',
@@ -91,16 +103,16 @@ export function deriveTasks(): ClaudeTask[] {
         'completed': 'done',
         'failed': 'failed',
       };
-      if (phaseMap[last.phase] !== undefined) {
-        phase = phaseMap[last.phase];
+      if (phaseMap[phaseEvent.phase] !== undefined) {
+        phase = phaseMap[phaseEvent.phase];
       }
     }
 
     // Override with specific event types
-    if (last.type === 'pr_created') phase = 'done';
-    if (last.type === 'test_fail') phase = 'test_failed';
-    if (last.type === 'blocked') phase = 'failed';
-    if (last.type === 'manual_verify_waiting') phase = 'waiting_manual_test';
+    if (phaseEvent.type === 'pr_created') phase = 'done';
+    if (phaseEvent.type === 'test_fail') phase = 'test_failed';
+    if (phaseEvent.type === 'blocked') phase = 'failed';
+    if (phaseEvent.type === 'manual_verify_waiting') phase = 'waiting_manual_test';
 
     tasks.push({
       taskId,
