@@ -6,3 +6,7 @@ node_modules/
 next-env.d.ts
 .claude/
 claude/plans/
+
+# Preset config files — users customize these locally, so they must not be tracked.
+# Use pilot.yaml.template as the starting point for new configurations.
+modernize-java-pilot.yaml
