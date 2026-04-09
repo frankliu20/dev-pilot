@@ -7,13 +7,13 @@ Check if the user's prompt contains `--auto` (e.g., `/pilot-dev-issue --auto htt
 - **Normal mode** (default): Run the full pipeline with minimal interruption. Only stop for: (1) Phase 3 plan approval + test strategy, (2) unclear requirements needing clarification, (3) test failures after 3 auto-fix rounds, (4) manual verification if strategy 3 was chosen. Everything else proceeds automatically.
 - **Auto mode** (`--auto`): Run the entire pipeline without stopping. No user prompts, no confirmations. Defaults: test strategy 1 (build only), auto-approve plan, skip knowledge capture. If anything fails after 3 auto-fix rounds, log `blocked` and stop silently.
 
-Also check for `--test-scenario <id>` where `<id>` matches a filename (without `.md`) in `~/.claude/test-scenarios/`.
+Also check for `--test-scenario <id>` where `<id>` is one of the known scenario ids: `vscode` (3a), `intellij` (3b), `mcp-server` (3c).
 
-- If `--test-scenario <id>` is provided and `~/.claude/test-scenarios/<id>.md` exists → auto-select test strategy **3** with that scenario
-- If `--test-scenario <id>` is provided but no matching file exists → warn the user and prompt as normal in Phase 3
+- If `--test-scenario <id>` is provided with a known id → auto-select test strategy **3** with that scenario
+- If `--test-scenario <id>` is provided with an unknown id → warn the user and prompt as normal in Phase 3
 - If no `--test-scenario` flag → prompt the user as normal in Phase 3
 
-When `--test-scenario` is provided in **normal mode**: still show the plan for approval in Phase 3, but skip the test strategy prompt — use the pre-selected scenario automatically. Inform the user: "Test strategy pre-selected: 3 (<scenario name from front-matter>) via --test-scenario flag."
+When `--test-scenario` is provided in **normal mode**: still show the plan for approval in Phase 3, but skip the test strategy prompt — use the pre-selected scenario automatically. Inform the user: "Test strategy pre-selected: 3 (<scenario name>) via --test-scenario flag."
 
 When `--test-scenario` is provided in **auto mode**: ignored — auto mode always uses strategy 1 (build only).
 
@@ -287,12 +287,11 @@ Plan is ready. How should we verify the changes?
 1. Build only (default) — run build command
 2. Build + Impacted Tests — build + only run unit tests related to changed files
 3. Build + Impacted Tests + Manual Verify — choose a scenario:
-   <for each .md file in ~/.claude/test-scenarios/>
-   <letter>) <name from front-matter> — <description from front-matter>
+   a) VS Code Extension — test in Extension Host (F5)
+   b) IntelliJ Plugin — cross-repo build & verify
+   c) MCP Server — local Copilot verify
 
-If no test-scenario files exist in ~/.claude/test-scenarios/, only offer strategies 1 and 2.
-
-Pick 1/2/3<letter> (default: 1):
+Pick 1/2/3a/3b/3c (default: 1):
 ```
 
 **Wait for user to approve the plan AND choose a test strategy before proceeding.**
@@ -316,7 +315,7 @@ After plan approval:
 ## Phase 5: Test & Fix
 
 Check if a test-runner skill is available by looking for `~/.claude/skills/mod-java-test-runner/SKILL.md`:
-- If it exists → launch `/mod-java-test-runner` with the chosen test strategy and relevant context (changed files, test strategy number, scenario id if applicable)
+- If it exists → launch `/mod-java-test-runner` with the chosen test strategy and relevant context (changed files, test strategy number, scenario id if applicable: `vscode` for 3a, `intellij` for 3b, `mcp-server` for 3c)
 - If it does NOT exist → execute the strategies inline as described below
 
 ### Strategy 1 — Build Only (default):
@@ -334,18 +333,7 @@ Check if a test-runner skill is available by looking for `~/.claude/skills/mod-j
 - Run the build command from `pilot.yaml`
 - Run **only the impacted unit tests**
 - If either fails: auto-fix up to 3 rounds
-- All pass → **Load and execute the chosen test scenario from `~/.claude/test-scenarios/<id>.md`**, then STOP:
-
-#### Dynamic Test Scenarios (Strategy 3)
-
-Read the chosen test scenario file from `~/.claude/test-scenarios/<id>.md`. Each file has YAML front-matter with `id`, `name`, and `description`.
-
-Follow the instructions in the scenario file's sections:
-- **## Setup** — run any setup commands specified
-- **## Hand-off Instructions** — present these instructions to the user (what to test and how)
-- **## Verification Checklist** — present the checklist for the user to verify
-- **## Cleanup** — run cleanup commands after the user confirms
-
+- All pass → prepare the manual verify environment based on the chosen scenario (3a/3b/3c) and STOP:
   - **Before prompting the user**, write a decision notification file (see "Decision Notifications" section).
   - Wait for user to reply "ok" or describe issues to fix.
   - After user responds, delete the pending decision file.

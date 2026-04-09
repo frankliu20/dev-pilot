@@ -308,7 +308,6 @@ async function main() {
   const skillsSrcBase = path.join(SRC_DIR, 'skills');
   const skillsDest = path.join(CLAUDE_DIR, 'skills');
   const scriptsDest = path.join(CLAUDE_DIR, 'scripts');
-  const scenariosDest = path.join(CLAUDE_DIR, 'test-scenarios');
 
   if (skills.length === 0) {
     console.log('  (no skill packs activated)');
@@ -333,9 +332,8 @@ async function main() {
           ensureDir(scriptsDest);
           copyDir(subSrc, scriptsDest);
         } else if (entry.name === 'test-scenarios') {
-          // Copy test scenarios to ~/.claude/test-scenarios/
-          ensureDir(scenariosDest);
-          copyDir(subSrc, scenariosDest);
+          // Skip — test scenarios are now handled by the test-runner skill directly
+          continue;
         } else {
           // Regular skill — copy to ~/.claude/skills/<name>/
           copyDir(subSrc, path.join(skillsDest, entry.name));

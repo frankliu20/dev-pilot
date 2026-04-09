@@ -93,8 +93,8 @@ export type PRAction =
   | 'draft'
   | 'waiting';
 
-// Test scenario for manual verification (dynamic from test-scenarios/*.md)
-export type TestScenario = string;
+// Test scenario for manual verification: 'vscode' (3a), 'intellij' (3b), 'mcp-server' (3c)
+export type TestScenario = 'vscode' | 'intellij' | 'mcp-server';
 
 // ── CLI Tool configuration ────────────────────────────────────────────
 

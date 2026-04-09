@@ -322,7 +322,7 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
                     <td className={styles.colAction} onClick={e => e.stopPropagation()}>
                       <div className={styles.actionGroup}>
                         {isActive ? (
-                          <Button variant="secondary" size="sm" disabled>Running</Button>
+                          <Button variant="warning" size="sm" onClick={() => onAssign(issue, getMode(issue.number), true, hasModJava ? getScenario(issue.number) : undefined)}>Force Re-run</Button>
                         ) : isDone ? (
                           <Button variant="warning" size="sm" onClick={() => onAssign(issue, getMode(issue.number), true, hasModJava ? getScenario(issue.number) : undefined)}>Re-run</Button>
                         ) : (
@@ -332,7 +332,6 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
                           <button
                             className={styles.cleanBtn}
                             onClick={() => onClean(issue)}
-                            disabled={isActive}
                           >
                             <Icon name="broom" size={13} />
                           </button>

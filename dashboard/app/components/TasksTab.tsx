@@ -21,14 +21,16 @@ interface WorkerEntry {
 interface Props {
   tasks: ClaudeTask[];
   connected: boolean;
+  onClean?: (taskId: string) => void;
 }
 
-export default function TasksTab({ tasks, connected }: Props) {
+export default function TasksTab({ tasks, connected, onClean }: Props) {
   const [expandedTask, setExpandedTask] = useState<string | null>(null);
   const [showAllEvents, setShowAllEvents] = useState<string | null>(null);
   const [workers, setWorkers] = useState<Map<string, WorkerEntry>>(new Map());
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  const [confirmClean, setConfirmClean] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
 
   // Poll registry for worker status
@@ -69,6 +71,11 @@ export default function TasksTab({ tasks, connected }: Props) {
     } finally {
       setCancelling(null);
     }
+  };
+
+  const handleClean = (taskId: string) => {
+    setConfirmClean(null);
+    if (onClean) onClean(taskId);
   };
 
   const runningCount = useMemo(() =>
@@ -174,6 +181,17 @@ export default function TasksTab({ tasks, connected }: Props) {
                       {cancelling === task.taskId ? 'Cancelling...' : 'Cancel'}
                     </Button>
                   )}
+                  {!isRunning && onClean && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => { e.stopPropagation(); setConfirmClean(task.taskId); }}
+                      style={{ marginLeft: 'auto' }}
+                      title="Clean task log"
+                    >
+                      <Icon name="broom" size={13} /> Clean
+                    </Button>
+                  )}
                 </div>
 
                 {/* Progress pipeline */}
@@ -244,6 +262,16 @@ export default function TasksTab({ tasks, connected }: Props) {
         variant="danger"
         onConfirm={() => confirmCancel && handleCancel(confirmCancel)}
         onCancel={() => setConfirmCancel(null)}
+      />
+      <ConfirmDialog
+        open={!!confirmClean}
+        title="Clean Task Log"
+        message="This will delete the task's log file, removing it from the task list. The git worktree (if any) will be preserved."
+        confirmLabel="Clean"
+        cancelLabel="Cancel"
+        variant="warning"
+        onConfirm={() => confirmClean && handleClean(confirmClean)}
+        onCancel={() => setConfirmClean(null)}
       />
     </div>
   );

@@ -10,11 +10,9 @@ skills/
     ├── general-knowledge/
     │   └── SKILL.md          # Project conventions, gotchas, patterns
     ├── test-runner/
-    │   └── SKILL.md          # Build, test, manual verify strategies
-    ├── scripts/
-    │   └── your-script.sh    # Utility scripts (copied to ~/.claude/scripts/)
-    └── test-scenarios/
-        └── webapp.md         # Manual test scenario (copied to ~/.claude/test-scenarios/)
+    │   └── SKILL.md          # Build, test, manual verify strategies (includes scenario definitions)
+    └── scripts/
+        └── your-script.sh    # Utility scripts (copied to ~/.claude/scripts/)
 ```
 
 ## How to Create One
@@ -56,50 +54,13 @@ Project-level conventions, common pitfalls, and patterns. Referenced by agents d
 Build and test strategies. The `/pilot-dev-issue` command uses this to:
 - Run builds (`build.command` in SKILL.md or pilot.yaml)
 - Execute tests (`build.test_command`)
-- Handle manual verification scenarios
+- Handle manual verification scenarios (e.g., VS Code Extension, IntelliJ Plugin, MCP Server)
+
+Manual verify scenarios (strategy 3a/3b/3c) are defined directly in the test-runner SKILL.md, not as separate files.
 
 ### scripts
 
 Utility scripts copied to `~/.claude/scripts/`. Available to all agents via `Bash(~/.claude/scripts/your-script.sh)`.
-
-### test-scenarios
-
-Manual test scenario files. Automatically discovered by the test-runner skill during the manual verification phase.
-
-## Test Scenario Format
-
-Files in `test-scenarios/` follow this template:
-
-```markdown
----
-id: webapp
-name: "Web App (Browser)"
----
-
-## Setup
-[Build and launch commands]
-
-## Hand-off Instructions
-[What to tell the user to test]
-
-## Verification Checklist
-- [ ] Feature works correctly
-- [ ] No console errors
-
-## Cleanup
-[Cleanup commands]
-```
-
-### Fields
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `id` | Yes | Unique identifier for the scenario |
-| `name` | Yes | Human-readable name shown in the dashboard Actions tab |
-| Setup | Yes | Commands to build and launch the application |
-| Hand-off Instructions | Yes | What the user should manually verify |
-| Verification Checklist | Yes | Checkboxes for the user to confirm |
-| Cleanup | No | Commands to run after verification |
 
 ## Example: modernize-java
 

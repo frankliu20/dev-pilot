@@ -33,7 +33,8 @@ dev-pilot/
     ├── configuration.md
     ├── architecture.md             # ← You are here
     ├── creating-skill-packs.md
-    └── dev-guide.md
+    ├── dev-guide.md
+    └── task-status-and-notifications.md
 ```
 
 ## Component Overview
@@ -98,7 +99,7 @@ A Next.js 16 + React 19 web application for monitoring and controlling the AI en
 | `config.ts` | Reads `~/.claude/pilot.yaml`, provides singleton config with env-var fallbacks |
 | `github.ts` | Wraps `gh` CLI — fetches issues, PRs, commits; classifies PR actions |
 | `statusLog.ts` | Reads `.jsonl` log files, derives task phases via 3-layer resolution |
-| `decisions.ts` | Reads/dismisses pending decision files, auto-dismisses stale decisions |
+| `decisions.ts` | Merges decisions from JSONL events + JSON files, auto-dismisses stale decisions. See [Task Status & Notifications](task-status-and-notifications.md) |
 | `registry.ts` | In-memory task registry — assign, cancel, track worker lifecycle |
 | `terminal.ts` | Spawns Claude/Copilot terminals across platforms (Windows/macOS/Linux) |
 | `types.ts` | Shared TypeScript types and constants |

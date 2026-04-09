@@ -30,12 +30,24 @@ function runCleanup(cleanLogs: boolean, cleanWorktrees: boolean, pullLatest: boo
   const repoPaths = findAllRepoPaths();
 
   // 1. Clean logs — fast, synchronous file deletes
+  //    Skip 'pending-decisions' subdirectory (handled separately) to avoid
+  //    killing the fs.watch() on that directory, which would break the SSE stream.
   if (cleanLogs) {
     const logDir = join(workspace, 'logs');
     try {
       if (existsSync(logDir)) {
         const entries = readdirSync(logDir);
         for (const entry of entries) {
+          if (entry === 'pending-decisions') {
+            // Clean decision files inside the directory, but keep the directory itself
+            const decDir = join(logDir, 'pending-decisions');
+            try {
+              for (const f of readdirSync(decDir)) {
+                try { rmSync(join(decDir, f), { force: true }); } catch { /* ok */ }
+              }
+            } catch { /* ok */ }
+            continue;
+          }
           try {
             rmSync(join(logDir, entry), { recursive: true, force: true });
           } catch { /* best effort */ }
@@ -133,10 +145,24 @@ function runIssueCleanup(issueNumber: number) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { cleanLogs, cleanWorktrees, issueNumber } = body;
+  const { cleanLogs, cleanWorktrees, issueNumber, logOnly } = body;
 
   // Per-issue cleanup
   if (issueNumber) {
+    if (logOnly) {
+      // Only delete the log file, preserve worktree
+      const workspace = getWorkspace();
+      const logFile = join(workspace, 'logs', `issue-${issueNumber}.jsonl`);
+      try {
+        if (existsSync(logFile)) {
+          rmSync(logFile, { force: true });
+        }
+      } catch { /* best effort */ }
+      return NextResponse.json({
+        success: true,
+        results: [`Log cleaned for issue #${issueNumber}`],
+      });
+    }
     runIssueCleanup(issueNumber);
     return NextResponse.json({
       success: true,
