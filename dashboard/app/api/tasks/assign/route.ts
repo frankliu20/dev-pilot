@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     issueUrl: string;
     mode?: 'normal' | 'auto';
     force?: boolean;
-    testScenario?: 'vscode' | 'intellij';
+    testScenario?: 'vscode' | 'intellij' | 'mcp-server';
     cliTool?: CliTool;
   };
 
