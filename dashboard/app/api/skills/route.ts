@@ -41,6 +41,7 @@ async function readEntries(dir: string, category: SkillEntry['category']): Promi
 }
 
 export async function GET() {
+  console.log('[skills] Loading skills, agents, and commands');
   const [skills, agents, commands] = await Promise.all([
     readEntries(join(CLAUDE_DIR, 'skills'), 'skill'),
     readEntries(join(CLAUDE_DIR, 'agents'), 'agent'),
@@ -48,5 +49,6 @@ export async function GET() {
   ]);
 
   const all = [...commands, ...agents, ...skills];
+  console.log(`[skills] Found ${commands.length} commands, ${agents.length} agents, ${skills.length} skills`);
   return NextResponse.json({ entries: all });
 }

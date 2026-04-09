@@ -8,6 +8,7 @@ export async function GET() {
   const running = workers.filter(w => w.status === 'running').length;
   const total = workers.length;
 
+  console.log(`[tasks/registry] ${running} running, ${total} total workers`);
   return NextResponse.json({
     workers,
     summary: { running, total },

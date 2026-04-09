@@ -26,9 +26,11 @@ export async function POST(request: NextRequest) {
 
   const taskId = `issue-${issueNumber}`;
   const fixMode = mode || 'normal';
+  console.log(`[tasks/assign] Assigning issue #${issueNumber} (mode=${fixMode}, tool=${cliTool})`);
   const { result, entry, error } = registry.assign(taskId, issueUrl, fixMode, force, testScenario, cliTool);
 
   if (result === 'already_running') {
+    console.log(`[tasks/assign] Issue #${issueNumber} already running`);
     return NextResponse.json({
       success: false,
       error: `Issue #${issueNumber} already has an active Claude session`,
@@ -36,9 +38,11 @@ export async function POST(request: NextRequest) {
   }
 
   if (error) {
+    console.error(`[tasks/assign] Failed to assign issue #${issueNumber}: ${error}`);
     return NextResponse.json({ success: false, error }, { status: 500 });
   }
 
+  console.log(`[tasks/assign] Terminal opened for issue #${issueNumber}, task registered`);
   return NextResponse.json({
     success: true,
     message: `Claude started for #${issueNumber}`,

@@ -150,6 +150,7 @@ export async function POST(request: Request) {
   // Per-issue cleanup
   if (issueNumber) {
     if (logOnly) {
+      console.log(`[cleanup] Cleaning log only for issue #${issueNumber}`);
       // Only delete the log file, preserve worktree
       const workspace = getWorkspace();
       const logFile = join(workspace, 'logs', `issue-${issueNumber}.jsonl`);
@@ -163,6 +164,7 @@ export async function POST(request: Request) {
         results: [`Log cleaned for issue #${issueNumber}`],
       });
     }
+    console.log(`[cleanup] Cleaning log + worktree for issue #${issueNumber}`);
     runIssueCleanup(issueNumber);
     return NextResponse.json({
       success: true,
@@ -173,6 +175,7 @@ export async function POST(request: Request) {
   // Global cleanup — clean ALL repos and pull latest
   const config = getConfig();
   const repoCount = findAllRepoPaths().length;
+  console.log(`[cleanup] Global cleanup: logs=${cleanLogs}, worktrees=${cleanWorktrees}, repos=${repoCount}`);
   runCleanup(cleanLogs, cleanWorktrees, true);
 
   return NextResponse.json({

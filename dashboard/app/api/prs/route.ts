@@ -4,10 +4,12 @@ import { NextResponse } from 'next/server';
 import { fetchMyOpenPRs, fetchReviewRequestedPRs, fetchUnresolvedThreadCounts, classifyPRAction } from '@/lib/github';
 
 export async function GET() {
+  console.log('[prs] Fetching open PRs and review-requested PRs');
   const [myPRs, reviewRequestedPRs] = await Promise.all([
     fetchMyOpenPRs(),
     fetchReviewRequestedPRs(),
   ]);
+  console.log(`[prs] Found ${myPRs.length} my PRs, ${reviewRequestedPRs.length} review-requested`);
 
   // Batch GraphQL call for unresolved review thread counts (grouped by repo)
   const allPRs = [...myPRs, ...reviewRequestedPRs];
@@ -23,5 +25,6 @@ export async function GET() {
     return { ...enriched, action: classifyPRAction(enriched) };
   });
 
+  console.log(`[prs] Returning ${prs.length} PRs, ${reviewRequested.length} review-requested`);
   return NextResponse.json({ prs, reviewRequested });
 }

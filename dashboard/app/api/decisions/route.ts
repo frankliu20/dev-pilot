@@ -9,6 +9,8 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'taskId is required' }, { status: 400 });
   }
 
+  console.log(`[decisions] Dismissing decision for ${taskId}`);
   const removed = dismissDecision(taskId);
+  console.log(`[decisions] Decision ${taskId} ${removed ? 'dismissed' : 'not found'}`);
   return NextResponse.json({ success: removed });
 }

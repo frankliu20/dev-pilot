@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
   const strategyLabel = strategy === 'quick-approve' ? 'Quick Approve' : strategy === 'auto' ? 'Auto' : '';
   const tabSuffix = strategyLabel ? ` [${strategyLabel}]` : '';
 
+  console.log(`[tasks/review-pr] Reviewing PR ${label} (strategy=${strategy}, level=${level}, context=${context})`);
   const termResult = openClaudeTerminal({
     customPrompt,
     tabTitle: `Claude: Review PR ${label}${tabSuffix}`,
@@ -79,12 +80,14 @@ export async function POST(request: NextRequest) {
   });
 
   if (!termResult.success) {
+    console.error(`[tasks/review-pr] Failed to open terminal for PR ${label}: ${termResult.error}`);
     return NextResponse.json(
       { success: false, error: termResult.error || 'Failed to spawn terminal' },
       { status: 500 },
     );
   }
 
+  console.log(`[tasks/review-pr] Terminal opened for PR ${label}`);
   return NextResponse.json({
     success: true,
     message: `Claude opened for PR ${label} review (${strategy}/${level})`,

@@ -5,5 +5,6 @@ import { getConfig } from '@/lib/config';
 
 export async function GET() {
   const { skills } = getConfig();
+  console.log(`[config] Returning ${(skills || []).length} skills`);
   return NextResponse.json({ skills: skills || [] });
 }

@@ -22,6 +22,7 @@ function issueUrl(issue: { number: number; url?: string; repo?: string }): strin
 
 export async function GET() {
   const today = new Date().toISOString().substring(0, 10); // "2026-04-07"
+  console.log(`[report] Generating report for ${today}`);
 
   // Fetch all data in parallel (all functions now query ALL configured repos)
   const [commits, recentPRs, closedIssues, openIssues, openPRsRaw] = await Promise.all([
@@ -87,6 +88,7 @@ export async function GET() {
     commits: commits.length,
   };
 
+  console.log(`[report] Stats: ${stats.issuesClosed} closed, ${stats.prsMerged} merged, ${stats.prsOpen} open, ${stats.commits} commits`);
   return NextResponse.json({
     date: today,
     commits,

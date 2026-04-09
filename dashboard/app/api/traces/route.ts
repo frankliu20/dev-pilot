@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const minutes = parseInt(searchParams.get('minutes') || '60', 10) || 60;
   const sessionId = searchParams.get('sessionId')?.trim() || '';
+  console.log(`[traces] Querying traces: last ${minutes}min${sessionId ? `, session=${sessionId}` : ''}`);
 
   // Build KQL — match scripts/query-app-insights.sh exactly
   let kql = `traces | where timestamp > ago(${minutes}min)`;
@@ -115,6 +116,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    console.log(`[traces] Returning ${traces.length} traces`);
     return NextResponse.json({ traces, count: traces.length });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

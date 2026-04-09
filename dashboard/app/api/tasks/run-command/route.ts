@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing command or prompt' }, { status: 400 });
   }
 
+  console.log(`[tasks/run-command] Running: ${label} (tool=${cliTool})`);
   const termResult = openClaudeTerminal({
     customPrompt,
     tabTitle: `Claude: ${label}`,
@@ -38,12 +39,14 @@ export async function POST(request: NextRequest) {
   });
 
   if (!termResult.success) {
+    console.error(`[tasks/run-command] Failed to open terminal: ${termResult.error}`);
     return NextResponse.json(
       { success: false, error: termResult.error || 'Failed to spawn terminal' },
       { status: 500 },
     );
   }
 
+  console.log(`[tasks/run-command] Terminal opened for: ${label}`);
   return NextResponse.json({
     success: true,
     message: `Claude opened — running ${label}`,

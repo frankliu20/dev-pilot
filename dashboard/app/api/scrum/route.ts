@@ -53,6 +53,7 @@ interface ScrumItem {
 
 export async function GET() {
   const today = new Date().toISOString().substring(0, 10);
+  console.log(`[scrum] Generating scrum report for ${today}`);
   const lastMark = await readScrumMark();
 
   // Default to 3 days ago if no mark exists
@@ -158,14 +159,18 @@ export async function GET() {
     });
   }
 
+  const done = items.filter(i => i.status === 'done');
+  const ongoing = items.filter(i => i.status === 'ongoing');
+  const blockers = items.filter(i => i.status === 'blocker');
+  console.log(`[scrum] Done: ${done.length}, Ongoing: ${ongoing.length}, Blockers: ${blockers.length}`);
   return NextResponse.json({
     date: today,
     lastScrum: lastMark,
     sinceDate,
     items,
-    done: items.filter(i => i.status === 'done'),
-    ongoing: items.filter(i => i.status === 'ongoing'),
-    blockers: items.filter(i => i.status === 'blocker'),
+    done,
+    ongoing,
+    blockers,
   });
 }
 
@@ -180,6 +185,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No updates provided' }, { status: 400 });
   }
 
+  console.log(`[scrum] Posting status comments to ${updates.length} issues`);
   const results: { number: number; success: boolean; error?: string }[] = [];
 
   for (const update of updates) {
@@ -199,11 +205,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const posted = results.filter(r => r.success).length;
+  const failed = results.filter(r => !r.success).length;
+  console.log(`[scrum] Posted ${posted} comments, ${failed} failed`);
   return NextResponse.json({
     success: results.every(r => r.success),
     results,
-    posted: results.filter(r => r.success).length,
-    failed: results.filter(r => !r.success).length,
+    posted,
+    failed,
   });
 }
 
@@ -222,6 +231,7 @@ export async function PATCH() {
 
   try {
     await writeScrumMark(mark);
+    console.log(`[scrum] Scrum mark updated to ${mark.label}`);
     return NextResponse.json({ success: true, mark });
   } catch (err) {
     return NextResponse.json(

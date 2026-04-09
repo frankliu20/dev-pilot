@@ -30,20 +30,29 @@ export async function GET() {
         } catch { /* stream closed */ }
       }
 
+      console.log('[stream] SSE client connected');
+
       // Send initial state
-      send('tasks', { tasks: deriveTasks() });
-      send('decisions', { decisions: readPendingDecisions() });
+      const initialTasks = deriveTasks();
+      const initialDecisions = readPendingDecisions();
+      console.log(`[stream] Sending initial state: ${initialTasks.length} tasks, ${initialDecisions.length} decisions`);
+      send('tasks', { tasks: initialTasks });
+      send('decisions', { decisions: initialDecisions });
 
       // Watch logs directory for task changes
       // Also re-check decisions since task progress may auto-dismiss stale ones
       stopWatchingLogs = watchStatusLog(() => {
-        send('tasks', { tasks: deriveTasks() });
+        const tasks = deriveTasks();
+        console.log(`[stream] Log change detected, sending ${tasks.length} tasks`);
+        send('tasks', { tasks });
         send('decisions', { decisions: readPendingDecisions() });
       });
 
       // Watch pending-decisions directory for decision changes
       stopWatchingDecisions = watchDecisions(() => {
-        send('decisions', { decisions: readPendingDecisions() });
+        const decisions = readPendingDecisions();
+        console.log(`[stream] Decision change detected, sending ${decisions.length} decisions`);
+        send('decisions', { decisions });
       });
 
       // Heartbeat
@@ -52,6 +61,7 @@ export async function GET() {
       }, 30000);
     },
     cancel() {
+      console.log('[stream] SSE client disconnected');
       cleanup();
     },
   });
