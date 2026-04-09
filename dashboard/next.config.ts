@@ -26,6 +26,13 @@ const pilotEnv = loadPilotEnv();
 
 const nextConfig: NextConfig = {
   env: pilotEnv,
+  allowedDevOrigins: [
+    '127.0.0.1',
+    'localhost',
+    '*.local',
+    '10.*',
+    '192.168.*',
+  ],
 };
 
 export default nextConfig;
