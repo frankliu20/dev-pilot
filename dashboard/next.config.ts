@@ -32,7 +32,6 @@ const nextConfig: NextConfig = {
     '*.local',
     '10.*',
     '192.168.*',
-    '172.*',
   ],
 };
 
