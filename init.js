@@ -166,6 +166,7 @@ function writeYaml(config) {
   for (const skill of (config.skills || [])) {
     yaml += `  - ${skill}\n`;
   }
+  yaml += `\nchat_language: ${config.chat_language || 'English'}\n`;
   if (config.build) {
     yaml += '\nbuild:\n';
     for (const [key, value] of Object.entries(config.build)) {
@@ -356,7 +357,9 @@ async function main() {
       // Replace {{REPO}} placeholder with first repo
       let template = fs.readFileSync(claudeMdSrc, 'utf-8');
       const primaryRepo = (config.repos && config.repos[0]) || 'your-org/your-repo';
+      const chatLang = config.chat_language || 'English';
       template = template.replace(/\{\{REPO\}\}/g, primaryRepo);
+      template = template.replace(/\{\{CHAT_LANGUAGE\}\}/g, chatLang);
       fs.writeFileSync(claudeMdDest, template, 'utf-8');
       console.log('  [INSTALL] CLAUDE.md');
       installed++;

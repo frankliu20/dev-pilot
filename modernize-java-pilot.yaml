@@ -16,6 +16,9 @@ skills:
 # AI platform
 ai_platform: claude-code
 
+# Chat language
+chat_language: Chinese (Mandarin)
+
 # Default modes
 defaults:
   dev_issue_mode: normal

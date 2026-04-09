@@ -17,6 +17,11 @@ skills: []
 # Options: copilot-cli, claude-code
 ai_platform: claude-code
 
+# Chat language — the language Claude uses for discussions and explanations
+# Code, commits, and PRs are always in English regardless of this setting.
+# Examples: English, Chinese (Mandarin), Japanese, etc.
+chat_language: English
+
 # Default modes for automation
 defaults:
   dev_issue_mode: normal       # normal = interactive, auto = fully automated

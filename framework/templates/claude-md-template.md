@@ -6,7 +6,7 @@ I am a software engineer. I use Claude Code as my AI engineering team to handle 
 ## My Workflow Preferences
 
 ### Communication
-- Speak to me in Chinese (Mandarin) for discussions and explanations
+- Speak to me in {{CHAT_LANGUAGE}} for discussions and explanations
 - Code, commits, PR descriptions, and technical documentation should be in English
 - Be concise — I don't need lengthy explanations for things I already understand
 - When unsure, ask me rather than guessing
