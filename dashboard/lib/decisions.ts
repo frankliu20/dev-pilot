@@ -76,11 +76,30 @@ export function watchDecisions(callback: () => void): () => void {
     mkdirSync(dir, { recursive: true });
   }
 
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const debounced = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(callback, 300);
+  };
+
   const watcher = watch(dir, (_eventType, filename) => {
     if (filename && filename.endsWith('.json')) {
-      callback();
+      debounced();
     }
   });
 
-  return () => watcher.close();
+  // If the directory is deleted (e.g. during cleanup), the watcher emits an error.
+  // Recreate the directory so subsequent writes still land correctly.
+  watcher.on('error', () => {
+    try {
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+    } catch { /* best effort */ }
+  });
+
+  return () => {
+    if (timer) clearTimeout(timer);
+    watcher.close();
+  };
 }

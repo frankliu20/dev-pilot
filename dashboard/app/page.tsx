@@ -271,6 +271,26 @@ function DashboardInner() {
     }
   }, [toast]);
 
+  const handleCleanTask = useCallback(async (taskId: string) => {
+    const issueNumber = parseInt(taskId.replace('issue-', ''), 10);
+    if (isNaN(issueNumber)) return;
+    try {
+      await fetch('/api/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issueNumber, logOnly: true }),
+      });
+      toast({
+        title: `Cleaned ${taskId}`,
+        message: 'Task log removed. Worktree preserved.',
+        variant: 'success',
+        duration: 4000,
+      });
+    } catch (err) {
+      toast({ title: 'Cleanup failed', message: String(err), variant: 'danger' });
+    }
+  }, [toast]);
+
   const handleCleanup = useCallback(async () => {
     setCleaning(true);
     setShowCleanup(false);
@@ -479,7 +499,7 @@ function DashboardInner() {
           />
         )}
         {tab === 'tasks' && (
-          <TasksTab tasks={tasks} connected={connected} />
+          <TasksTab tasks={tasks} connected={connected} onClean={handleCleanTask} />
         )}
         {tab === 'actions' && (
           <ActionsTab

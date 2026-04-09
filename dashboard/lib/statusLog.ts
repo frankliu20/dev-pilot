@@ -118,14 +118,21 @@ export function deriveTasks(): ClaudeTask[] {
   return tasks.sort((a, b) => b.lastUpdate.localeCompare(a.lastUpdate));
 }
 
-// Watch for changes in the logs directory
+// Watch for changes in the logs directory (debounced to avoid storm during bulk deletes)
 export function watchStatusLog(callback: () => void): () => void {
   const dir = getLogDir();
-  // fs.watch fires on any file create/modify/delete within the directory
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const debounced = () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(callback, 300);
+  };
   const watcher = watch(dir, (_eventType, filename) => {
     if (filename && filename.endsWith('.jsonl')) {
-      callback();
+      debounced();
     }
   });
-  return () => watcher.close();
+  return () => {
+    if (timer) clearTimeout(timer);
+    watcher.close();
+  };
 }
