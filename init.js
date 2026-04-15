@@ -343,6 +343,32 @@ async function main() {
   }
   console.log('');
 
+  // 6b. Install personal skills (local-only, not in git)
+  console.log('Personal skills:');
+  const personalSkillsDir = path.join(SRC_DIR, 'personal-skills');
+  if (fs.existsSync(personalSkillsDir)) {
+    const personalEntries = fs.readdirSync(personalSkillsDir, { withFileTypes: true });
+    let personalCount = 0;
+    for (const entry of personalEntries) {
+      if (!entry.isDirectory()) continue;
+      const subSrc = path.join(personalSkillsDir, entry.name);
+
+      if (entry.name === 'scripts') {
+        ensureDir(scriptsDest);
+        copyDir(subSrc, scriptsDest);
+      } else {
+        copyDir(subSrc, path.join(skillsDest, entry.name));
+      }
+      personalCount++;
+    }
+    if (personalCount === 0) {
+      console.log('  (no personal skills found)');
+    }
+  } else {
+    console.log('  (personal-skills/ not found, skipping)');
+  }
+  console.log('');
+
   // 7. CLAUDE.md template (never overwrite)
   console.log('CLAUDE.md:');
   const claudeMdSrc = path.join(SRC_DIR, 'framework', 'templates', 'claude-md-template.md');

@@ -11,6 +11,7 @@ interface SkillEntry {
   name: string;
   category: 'skill' | 'agent' | 'command';
   content: string;
+  personal?: boolean;
 }
 
 async function readEntries(dir: string, category: SkillEntry['category']): Promise<SkillEntry[]> {
@@ -48,7 +49,21 @@ export async function GET() {
     readEntries(join(CLAUDE_DIR, 'commands'), 'command'),
   ]);
 
+  // Detect personal skills by scanning the personal-skills/ directory in the project root
+  const personalSkillsDir = join(process.cwd(), '..', 'personal-skills');
+  const personalNames = new Set<string>();
+  try {
+    const items = await readdir(personalSkillsDir, { withFileTypes: true });
+    for (const item of items) {
+      if (item.isDirectory()) personalNames.add(item.name);
+    }
+  } catch { /* personal-skills/ dir not found — ok */ }
+
+  for (const skill of skills) {
+    if (personalNames.has(skill.name)) skill.personal = true;
+  }
+
   const all = [...commands, ...agents, ...skills];
-  console.log(`[skills] Found ${commands.length} commands, ${agents.length} agents, ${skills.length} skills`);
+  console.log(`[skills] Found ${commands.length} commands, ${agents.length} agents, ${skills.length} skills (${personalNames.size} personal)`);
   return NextResponse.json({ entries: all });
 }

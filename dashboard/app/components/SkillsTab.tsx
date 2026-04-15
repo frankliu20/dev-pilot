@@ -17,6 +17,7 @@ interface SkillEntry {
   name: string;
   category: 'skill' | 'agent' | 'command';
   content: string;
+  personal?: boolean;
 }
 
 type CategoryFilter = 'all' | 'skill' | 'agent' | 'command';
@@ -154,6 +155,9 @@ export default function SkillsTab({ cliTool = 'claude' }: SkillsTabProps) {
                   <Badge variant={config.variant as 'info' | 'purple' | 'success'} size="sm">
                     {config.label}
                   </Badge>
+                  {entry.personal && (
+                    <Badge variant="warning" size="sm">Personal</Badge>
+                  )}
                   {entry.category === 'command' && (
                     <Button
                       variant="primary"
