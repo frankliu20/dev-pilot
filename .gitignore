@@ -6,3 +6,8 @@ node_modules/
 next-env.d.ts
 .claude/
 claude/plans/
+
+# Personal skills (local only, not pushed to remote)
+personal-skills/*
+!personal-skills/README.md
+!personal-skills/.gitkeep

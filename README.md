@@ -54,6 +54,15 @@ claude "/pilot-dev-issue --auto https://github.com/org/repo/issues/123" &
 claude "/pilot-dev-issue --auto https://github.com/org/repo/issues/456" &
 ```
 
+### Personal Skills
+
+Create skills that are **local to your machine** and never pushed to remote:
+
+1. Add a skill directory to `personal-skills/` (e.g., `personal-skills/my-tool/SKILL.md`)
+2. Run `node init.js --force` to install to `~/.claude/skills/`
+
+Personal skills install after skill packs, so they can override pack skills with the same name. See [`personal-skills/README.md`](personal-skills/README.md) for details.
+
 ## Documentation
 
 | Document | Description |
