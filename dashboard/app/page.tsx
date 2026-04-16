@@ -544,7 +544,7 @@ function DashboardInner() {
         color: 'var(--text-tertiary, #888)',
         borderTop: '1px solid var(--border-primary, #333)',
       }}>
-        Experimental project — for issues or suggestions, reach out to <strong>haital</strong> or submit a PR.
+        Experimental project — for issues or suggestions, <a href="https://github.com/frankliu20/dev-pilot/issues" className="underline hover:text-white">open an issue</a> or <a href="https://github.com/frankliu20/dev-pilot/pulls" className="underline hover:text-white">submit a PR</a>.
       </footer>
     </div>
   );
