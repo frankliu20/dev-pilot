@@ -76,6 +76,7 @@ export function openClaudeTerminal(issueUrlOrOpts: string | TerminalOptions, mod
     if (platform === 'win32') {
       try {
         spawn('wt.exe', [
+          '-w', '0',
           'new-tab',
           '--title', tabTitle,
           'cmd', '/k', cliCmd,
