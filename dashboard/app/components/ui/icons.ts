@@ -336,6 +336,11 @@ export const ICONS: Record<string, IconDef> = {
     polylines: ['16 3.13a4 4 0 0 1 0 7.75'],
   },
 
+  user: {
+    paths: ['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'],
+    circles: [{ cx: 12, cy: 7, r: 4 }],
+  },
+
   send: {
     lines: [{ x1: 22, y1: 2, x2: 11, y2: 13 }],
     paths: ['M22 2L15 22l-4-9-9-4z'],
