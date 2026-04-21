@@ -70,6 +70,7 @@ Personal skills install after skill packs, so they can override pack skills with
 | [Configuration Guide](docs/configuration.md) | `pilot.yaml`, `settings.json`, environment variables |
 | [Architecture & File Structure](docs/architecture.md) | Project layout, module responsibilities, data flow |
 | [Creating Skill Packs](docs/creating-skill-packs.md) | Build project-specific knowledge packs |
+| [Claude with Copilot API](docs/claude-with-copilot-api.md) | Run Claude Code through GitHub Copilot API proxy |
 | [Developer Guide](docs/dev-guide.md) | Build, test, and contribute — practical workflows |
 | [Integration Test Plan](dashboard/INTEGRATION_TEST_PLAN.md) | 34 integration test scenarios across 5 pipelines |
 

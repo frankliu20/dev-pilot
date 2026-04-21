@@ -63,6 +63,7 @@ export function deriveTasks(): ClaudeTask[] {
   const taskMap = new Map<string, StatusLogEntry[]>();
 
   for (const entry of entries) {
+    if (!entry.task_id) continue;
     const existing = taskMap.get(entry.task_id) || [];
     existing.push(entry);
     taskMap.set(entry.task_id, existing);
