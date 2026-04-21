@@ -23,17 +23,12 @@ Edit `~/.claude/settings.json` to route Claude Code traffic through the proxy:
 ```jsonc
 {
   "env": {
-    // Point Claude Code to the local proxy
     "ANTHROPIC_BASE_URL": "http://localhost:4141",
-    // The proxy handles auth — any non-empty value works
     "ANTHROPIC_AUTH_TOKEN": "dummy",
-    // Choose your preferred model
-    "ANTHROPIC_MODEL": "claude-sonnet-4-20250514",
-    // Optional: route all model tiers through the same model
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-20250514",
-    "ANTHROPIC_SMALL_FAST_MODEL": "claude-sonnet-4-20250514",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-sonnet-4-20250514",
-    // Optional: reduce unnecessary API calls
+    "ANTHROPIC_MODEL": "claude-opus-4.6",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-opus-4.6",
+    "ANTHROPIC_SMALL_FAST_MODEL": "claude-opus-4.6",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-opus-4.6",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   }
