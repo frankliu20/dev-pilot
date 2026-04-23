@@ -18,6 +18,34 @@ Dev Pilot 将 Claude Code 打造成全自主开发流水线。你不再需要亲
 - 🎛️ **掌控全局** — 实施前审批计划，选择测试策略，合并前审查。AI 绝不会在没有你确认的情况下合并。
 - 📊 **实时仪表盘** — 在一个界面查看所有 Issue、PR、任务和待决策项。AI 需要你的输入时即时通知。
 
+## 仪表盘
+
+Dev Pilot 仪表盘提供可视化指挥中心，管理你的 AI 工程工作流。
+
+### Issue 总览
+
+查看分配给你的 Issue，一键将任务分配给 AI 智能体。
+
+![Issue 总览](docs/images/dashboard-page-1.png)
+
+### Claude Code 任务
+
+实时监控 AI 智能体任务 — 查看进度条、当前阶段和已用时间。
+
+![Claude Code 任务](docs/images/dashboard-page-2.png)
+
+### Pull Request 管理
+
+管理 AI 团队创建的 PR — 查看审查状态、合并目标，触发代码审查。
+
+![Pull Request 管理](docs/images/dashboard-page-3.png)
+
+### 每日报告
+
+获取当日工作总结：已关闭 Issue、已合并 PR，以及完成工作的时间线。
+
+![每日报告](docs/images/dashboard-page-4.png)
+
 ## 快速开始
 
 ```bash
