@@ -91,6 +91,24 @@ Location: `~/.claude/settings.json`
 
 Add project-specific permissions as needed (e.g., `Bash(mvn *)` for Java projects).
 
+## Updating / Syncing
+
+Dev Pilot is actively maintained. When the upstream repo has new commands, agents, or features, sync them to your local `~/.claude/` with:
+
+```bash
+cd dev-pilot && git pull
+node init.js --config ~/.claude/pilot.yaml --force
+```
+
+| Flag | What it does |
+|------|-------------|
+| `--config ~/.claude/pilot.yaml` | Reuses your existing configuration instead of prompting for setup |
+| `--force` | Overwrites framework files (commands, agents) with the latest versions |
+
+> **Note:** `--force` alone (without `--config`) will trigger the interactive setup wizard and create a new `pilot.yaml`, overwriting your existing one. Always pair `--force` with `--config` to preserve your configuration.
+
+Your `CLAUDE.md` is never overwritten by `init.js`.
+
 ## Environment Variables
 
 The dashboard and lib modules also read these environment variables:
