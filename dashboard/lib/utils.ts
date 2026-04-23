@@ -86,19 +86,3 @@ export function debounce<T extends (...args: unknown[]) => void>(
 export function cn(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(' ');
 }
-
-/**
- * Converts a GitHub username (e.g. "haozhan_microsoft") to a Teams email ("haozhan@microsoft.com").
- */
-export function githubToTeamsEmail(username: string): string {
-  return username.replace(/_microsoft$/, '') + '@microsoft.com';
-}
-
-/**
- * Builds a Microsoft Teams deep link that opens a chat with the given email
- * and pre-fills a review request message.
- */
-export function buildTeamsPingUrl(email: string, pr: { number: number; title: string; url: string }): string {
-  const msg = `Hi, could you please review my PR #${pr.number}: ${pr.title}\n${pr.url}`;
-  return `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(email)}&message=${encodeURIComponent(msg)}`;
-}

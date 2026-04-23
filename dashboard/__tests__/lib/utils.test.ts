@@ -7,8 +7,6 @@ import {
   truncate,
   debounce,
   cn,
-  githubToTeamsEmail,
-  buildTeamsPingUrl,
 } from '@/lib/utils';
 
 // ── timeAgo ──────────────────────────────────────────────────────────────
@@ -222,42 +220,5 @@ describe('cn', () => {
 
   it('returns empty string when all values are falsy', () => {
     expect(cn(false, null, undefined, '')).toBe('');
-  });
-});
-
-// ── githubToTeamsEmail ───────────────────────────────────────────────────
-
-describe('githubToTeamsEmail', () => {
-  it('converts _microsoft suffix to @microsoft.com', () => {
-    expect(githubToTeamsEmail('haozhan_microsoft')).toBe('haozhan@microsoft.com');
-  });
-
-  it('appends @microsoft.com when no _microsoft suffix', () => {
-    expect(githubToTeamsEmail('johndoe')).toBe('johndoe@microsoft.com');
-  });
-
-  it('only removes trailing _microsoft, not internal ones', () => {
-    expect(githubToTeamsEmail('ms_microsoft_microsoft')).toBe('ms_microsoft@microsoft.com');
-  });
-});
-
-// ── buildTeamsPingUrl ────────────────────────────────────────────────────
-
-describe('buildTeamsPingUrl', () => {
-  it('builds a Teams deep link with encoded email and message', () => {
-    const pr = { number: 100, title: 'Fix bug', url: 'https://github.com/o/r/pull/100' };
-    const url = buildTeamsPingUrl('user@microsoft.com', pr);
-
-    expect(url).toContain('https://teams.microsoft.com/l/chat/0/0');
-    expect(url).toContain(`users=${encodeURIComponent('user@microsoft.com')}`);
-    expect(url).toContain(encodeURIComponent('PR #100'));
-    expect(url).toContain(encodeURIComponent(pr.url));
-  });
-
-  it('encodes special characters in the message', () => {
-    const pr = { number: 1, title: 'Fix & improve', url: 'https://github.com/o/r/pull/1' };
-    const url = buildTeamsPingUrl('a@b.com', pr);
-
-    expect(url).toContain(encodeURIComponent('&'));
   });
 });

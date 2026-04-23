@@ -34,7 +34,7 @@ export function makeIssue(overrides?: Partial<GHIssue>): GHIssue {
     number: 42,
     title: 'Fix the login bug',
     labels: [{ name: 'bug' }],
-    assignees: [{ login: 'haital' }],
+    assignees: [{ login: 'testuser' }],
     updatedAt: '2026-04-08T10:00:00Z',
     createdAt: '2026-04-07T09:00:00Z',
     url: 'https://github.com/owner/repo/issues/42',

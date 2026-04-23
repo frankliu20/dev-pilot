@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { GHPR, PRAction, REPO_URL, ReviewConfig, ReviewStrategy, ReviewLevel, DEFAULT_REVIEW_CONFIGS, STRATEGY_OPTIONS, LEVEL_OPTIONS } from '@/lib/types';
 import { PR_ACTION_CONFIG } from '@/lib/constants';
-import { cn, githubToTeamsEmail, buildTeamsPingUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import Icon from './ui/Icon';
 import Badge from './ui/Badge';
 import Button from './ui/Button';
@@ -157,21 +157,7 @@ export default function PullRequestsTab({ prs, reviewRequested, loading, onRefre
               <Icon name="external-link" size={12} />
               View
             </a>
-            {pr.action === 'review_pending' && pr.reviewRequests?.length > 0 && (
-              pr.reviewRequests.map(r => (
-                <Tooltip key={r.login} content={`Ping ${r.login.replace(/_microsoft$/, '')} on Teams`}>
-                  <a
-                    href={buildTeamsPingUrl(githubToTeamsEmail(r.login), pr)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.teamsLink}
-                  >
-                    <Icon name="send" size={12} />
-                    Ping
-                  </a>
-                </Tooltip>
-              ))
-            )}
+
           </div>
         </div>
         {isExpanded && pr.body && (

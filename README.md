@@ -66,4 +66,4 @@ claude "/pilot-dev-issue --auto https://github.com/org/repo/issues/456" &
 
 ## License
 
-Internal Use Only — see [LICENSE](./LICENSE).
+MIT License — see [LICENSE](./LICENSE).

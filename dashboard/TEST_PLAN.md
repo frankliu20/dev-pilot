@@ -78,8 +78,6 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-
 | **`truncate`** | String shorter than max → no truncation; exact length → no truncation; longer → truncated with `…`; `maxLength=0`; `maxLength=1`; empty string |
 | **`debounce`** | Calls only after delay; resets timer on rapid calls; correct `this` and args forwarded (use `vi.useFakeTimers`) |
 | **`cn`** | Multiple classes joined; falsy values (`false`, `null`, `undefined`, `""`, `0`) filtered; single class; empty call |
-| **`githubToTeamsEmail`** | `"haozhan_microsoft"` → `"haozhan@microsoft.com"`; username without `_microsoft` suffix; empty string |
-| **`buildTeamsPingUrl`** | Returns valid MS Teams URL; special characters in email/PR title are encoded |
 
 ### 3.2 `lib/config.ts` (~15 cases)
 
@@ -634,7 +632,6 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-
 | **Expand** | Click → shows PR body |
 | **Fix Comments** | Button visible for PRs with unresolved threads; calls API |
 | **Review** | Opens review with strategy/level options; calls API |
-| **Teams Ping** | Generates correct MS Teams deep link |
 | **Filter** | Filter by action type (ready to merge, CI failing, etc.) |
 | **Empty state** | "No open PRs" message |
 
