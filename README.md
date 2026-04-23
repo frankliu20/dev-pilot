@@ -2,6 +2,8 @@
 
 # Dev Pilot
 
+[![PR Gate](https://github.com/frankliu20/dev-pilot/actions/workflows/pr-gate.yml/badge.svg)](https://github.com/frankliu20/dev-pilot/actions/workflows/pr-gate.yml)
+
 > An AI Multi-Agent engineering team that empowers **single developer = full engineering team**
 
 Automate the entire software development lifecycle: coding, testing, building, CI fixing, code review repair & comment resolution.
