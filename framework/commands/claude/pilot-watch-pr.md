@@ -60,7 +60,9 @@ Cron job ID: <id> — cancel anytime with CronDelete.
 
 ### Step 1: Fetch my open PRs from ALL repos
 
-For each repo in `$REPOS`:
+For each repo in `$REPOS`, use the platform-appropriate CLI:
+
+#### GitHub (`$PLATFORM == github`):
 ```bash
 gh pr list --repo $REPO_SLUG \
   --author @me \
@@ -69,7 +71,26 @@ gh pr list --repo $REPO_SLUG \
   --limit 20
 ```
 
-For each PR with `reviewDecision` of `CHANGES_REQUESTED` or `REVIEW_REQUIRED`, also fetch unresolved review threads:
+#### GitLab (`$PLATFORM == gitlab`):
+```bash
+glab mr list --repo $REPO_SLUG \
+  --author @me \
+  --state opened \
+  --output json
+```
+
+#### Azure DevOps (`$PLATFORM == azdevops`):
+```bash
+az repos pr list \
+  --repository $REPO_SLUG \
+  --creator @me \
+  --status active \
+  --output json
+```
+
+#### Fetch unresolved review threads (GitHub only):
+
+For each PR with `reviewDecision` of `CHANGES_REQUESTED` or `REVIEW_REQUIRED`:
 ```bash
 gh api graphql -f query='
 query($owner:String!,$repo:String!,$number:Int!) {
@@ -87,6 +108,8 @@ query($owner:String!,$repo:String!,$number:Int!) {
   }
 }' -f owner="$OWNER" -f repo="$REPO_NAME" -F number=$PR_NUMBER
 ```
+
+**Note**: GitLab and Azure DevOps do not support GraphQL review thread queries. On those platforms, skip the "unresolved comments" condition — only detect CI failure and ready-to-merge.
 
 ### Step 2: Detect THREE conditions
 
@@ -192,10 +215,22 @@ Maintain a counter per PR per fix type. Persist in `$WS/logs/auto-fix-state.json
 
 Only trigger when CI **newly failed** (not already failing from last cycle with same error).
 
-1. **Fetch failed CI logs** (to include as context):
+1. **Fetch failed CI logs** (to include as context, platform-specific):
+
+**GitHub:**
 ```bash
 FAILED_RUN=$(gh run list --repo $REPO_SLUG --branch <branch> --status failure --limit 1 --json databaseId --jq '.[0].databaseId')
 CI_LOG=$(gh run view $FAILED_RUN --repo $REPO_SLUG --log-failed 2>&1 | tail -200)
+```
+
+**GitLab:**
+```bash
+CI_LOG=$(glab ci view --repo $REPO_SLUG --branch <branch> 2>&1 | tail -200)
+```
+
+**Azure DevOps:**
+```bash
+CI_LOG=$(az pipelines runs list --branch <branch> --status completed --result failed --top 1 --output json 2>&1 | tail -200)
 ```
 
 2. **Spawn `pilot-dev-issue` with `--auto`** to fix in the existing worktree:
