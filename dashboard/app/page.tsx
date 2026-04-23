@@ -3,7 +3,7 @@
 import { Suspense, useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { GHIssue, GHPR, PRAction, REPO_URL, ReviewConfig, CliTool, CLI_TOOL_CONFIG } from '@/lib/types';
-import { useTaskStream, useGitHubData, useTheme, useKeyboardShortcuts } from './hooks';
+import { useTaskStream, useGitHubData, useTheme, useKeyboardShortcuts, useGHAccount } from './hooks';
 import { ACTIVE_PHASES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { ToastProvider, useToast } from './components/ui/Toast';
@@ -79,6 +79,7 @@ function DashboardInner() {
 
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
+  const { accounts, activeAccount, switching, switchAccount } = useGHAccount();
 
   const { data: issueData, loading: issuesLoading, refresh: refreshIssues } =
     useGitHubData<IssueData>('/api/issues');
@@ -352,6 +353,38 @@ function DashboardInner() {
           <h1 className={styles.logo}>Copilot Dev Dashboard</h1>
         </div>
         <div className={styles.headerRight}>
+          {accounts.length > 1 ? (
+            <div className={styles.accountSelector}>
+              <Icon name="user" size={14} />
+              <Select
+                size_="sm"
+                value={activeAccount}
+                onChange={async (e) => {
+                  const ok = await switchAccount(e.target.value);
+                  if (ok) {
+                    toast({ title: 'Switched to ' + e.target.value, variant: 'success' });
+                    refreshIssues();
+                    refreshPRs();
+                  } else {
+                    toast({ title: 'Failed to switch account', variant: 'danger' });
+                  }
+                }}
+                disabled={switching}
+                title="Switch GitHub account"
+              >
+                {accounts.map((a) => (
+                  <option key={a.user} value={a.user}>
+                    {a.user}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ) : activeAccount && (
+            <div className={styles.accountSelector}>
+              <Icon name="user" size={14} />
+              <span className={styles.accountName}>{activeAccount}</span>
+            </div>
+          )}
           <Select
             size_="sm"
             value={cliTool}

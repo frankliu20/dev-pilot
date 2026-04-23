@@ -34,6 +34,17 @@
   gap: var(--space-3);
 }
 
+.accountSelector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-fg-subtle);
+}
+
+.accountName {
+  font-size: var(--text-2xs);
+}
+
 .connectionStatus {
   display: flex;
   align-items: center;
