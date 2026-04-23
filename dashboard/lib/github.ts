@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { join } from 'path';
 import { GHIssue, GHPR, PRAction } from './types';
-import { getConfig, getRepo, getReviewRepos, getWorkspace } from './config';
+import { getConfig, getRepo, getRepoSlug, getReviewRepos, getWorkspace } from './config';
 import { runCLI, getPlatform, supportsGraphQL, repoFromUrl } from './git-provider';
 
 const execAsync = promisify(exec);
@@ -19,8 +19,9 @@ export async function fetchMyOpenIssues(): Promise<GHIssue[]> {
   const repos = getConfig().repos;
   const results = await Promise.all(
     repos.map(async (repo) => {
+      const slug = getRepoSlug(repo);
       const raw = await runGH(
-        `issue list --repo ${repo} --assignee @me --state open --limit 30 ` +
+        `issue list --repo ${slug} --assignee @me --state open --limit 30 ` +
         `--json number,title,labels,assignees,updatedAt,createdAt,url,milestone,state`
       );
       try {
@@ -40,8 +41,9 @@ export async function fetchMyOpenPRs(): Promise<GHPR[]> {
   const repos = getConfig().repos;
   const results = await Promise.all(
     repos.map(async (repo) => {
+      const slug = getRepoSlug(repo);
       const raw = await runGH(
-        `pr list --repo ${repo} --author @me --state open --limit 20 ` +
+        `pr list --repo ${slug} --author @me --state open --limit 20 ` +
         `--json number,title,headRefName,isDraft,createdAt,reviewDecision,statusCheckRollup,url,body,comments,reviews,reviewRequests`
       );
       try {
@@ -60,8 +62,9 @@ export async function fetchReviewRequestedPRs(): Promise<GHPR[]> {
   const jsonFields = 'number,title,headRefName,isDraft,createdAt,reviewDecision,statusCheckRollup,url,body,comments,reviews,reviewRequests,author';
   const results = await Promise.all(
     getReviewRepos().map(async (repo) => {
+      const slug = getRepoSlug(repo);
       const raw = await runGH(
-        `pr list --repo ${repo} --search "review-requested:@me" --state open --limit 20 --json ${jsonFields}`
+        `pr list --repo ${slug} --search "review-requested:@me" --state open --limit 20 --json ${jsonFields}`
       );
       try {
         return JSON.parse(raw) as GHPR[];
@@ -136,7 +139,7 @@ export async function fetchUnresolvedThreadCounts(
 
 /** Fetch issue detail — extracts repo from issue URL or falls back to primary repo */
 export async function fetchIssueDetail(number: number, issueUrl?: string): Promise<GHIssue | null> {
-  const repo = (issueUrl && repoFromUrl(issueUrl)) || getRepo();
+  const repo = (issueUrl && repoFromUrl(issueUrl)) || getRepoSlug();
   const raw = await runGH(
     `issue view ${number} --repo ${repo} ` +
     `--json number,title,labels,assignees,updatedAt,createdAt,url,milestone,state,body`
@@ -233,8 +236,9 @@ export async function fetchRecentPRs(): Promise<ReportPR[]> {
   const repos = getConfig().repos;
   const results = await Promise.all(
     repos.map(async (repo) => {
+      const slug = getRepoSlug(repo);
       const raw = await runGH(
-        `pr list --repo ${repo} --author @me --state all --limit 30 ` +
+        `pr list --repo ${slug} --author @me --state all --limit 30 ` +
         `--json number,title,state,createdAt,mergedAt,reviewDecision,statusCheckRollup`
       );
       try {
@@ -280,8 +284,9 @@ export async function fetchClosedIssues(): Promise<ClosedIssue[]> {
   const repos = getConfig().repos;
   const results = await Promise.all(
     repos.map(async (repo) => {
+      const slug = getRepoSlug(repo);
       const raw = await runGH(
-        `issue list --repo ${repo} --assignee @me --state closed --limit 20 ` +
+        `issue list --repo ${slug} --assignee @me --state closed --limit 20 ` +
         `--json number,title,closedAt`
       );
       try {

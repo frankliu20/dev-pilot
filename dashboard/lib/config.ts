@@ -80,6 +80,24 @@ export function getRepo(): string {
   return getConfig().repos[0] || '';
 }
 
+/**
+ * Extract owner/repo slug from a full repo URL.
+ * For bare slugs (backward compat), returns as-is.
+ */
+export function getRepoSlug(repo?: string): string {
+  const r = repo || getRepo();
+  if (!r.startsWith('http')) return r;
+  try {
+    const parts = new URL(r).pathname.split('/').filter(Boolean);
+    // Azure DevOps: /org/project/_git/repo
+    const gitIdx = parts.indexOf('_git');
+    if (gitIdx >= 2) return `${parts[gitIdx - 2]}/${parts[gitIdx - 1]}`;
+    return parts.slice(0, 2).join('/');
+  } catch {
+    return r;
+  }
+}
+
 export function getReviewRepos(): string[] {
   return getConfig().repos || [];
 }

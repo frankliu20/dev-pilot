@@ -7,16 +7,20 @@ workspace: ~/claude/workspace
 
 # Git platform — which hosting service to use
 # Options: github, gitlab, azdevops
-# Each platform requires its own CLI tool:
-#   github  → gh     (https://cli.github.com)
-#   gitlab  → glab   (https://gitlab.com/gitlab-org/cli)
-#   azdevops → az    (https://aka.ms/azure-cli + az devops extension)
+# Each platform requires its own CLI tool installed and authenticated:
+#   github   → gh   (https://cli.github.com)           → gh auth login
+#   gitlab   → glab (https://gitlab.com/gitlab-org/cli) → glab auth login
+#   azdevops → az   (https://aka.ms/azure-cli)          → az login
 platform: github
 
-# Repos to work with (owner/repo format)
+# Repos to work with (full git URL)
 # The first repo is the primary target for /pilot-dev-issue
+# Examples:
+#   - https://github.com/your-org/your-repo
+#   - https://gitlab.mycompany.com/team/project
+#   - https://dev.azure.com/org/project/_git/repo
 repos:
-  - your-org/your-repo
+  - https://github.com/your-org/your-repo
 
 # AI platform — which CLI tool to use on the dashboard
 # Options: copilot-cli, claude-code

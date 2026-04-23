@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { openClaudeTerminal } from '@/lib/terminal';
-import { REPO, ReviewStrategy, ReviewLevel, ReviewContext, DEFAULT_REVIEW_CONFIGS, CliTool } from '@/lib/types';
+import { REPO, REPO_URL, ReviewStrategy, ReviewLevel, ReviewContext, DEFAULT_REVIEW_CONFIGS, CliTool } from '@/lib/types';
 
 interface ReviewPRBody {
   prNumber?: number;
@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
   let label: string;
 
   if (rawPrUrl && typeof rawPrUrl === 'string') {
-    const ghPrPattern = /^https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/\d+/;
+    const ghPrPattern = /^https:\/\/[^/]+\/[^/]+\/[^/]+\/(pull|merge_requests)\/\d+/;
     if (!ghPrPattern.test(rawPrUrl)) {
       return NextResponse.json(
-        { error: 'Invalid PR URL. Expected format: https://github.com/owner/repo/pull/123' },
+        { error: 'Invalid PR/MR URL. Expected format: https://<host>/owner/repo/pull/123' },
         { status: 400 },
       );
     }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     const num = prUrl.match(/\/pull\/(\d+)/)?.[1] || 'PR';
     label = `#${num}`;
   } else if (prNumber && typeof prNumber === 'number') {
-    prUrl = `https://github.com/${REPO}/pull/${prNumber}`;
+    prUrl = `${REPO_URL}/pull/${prNumber}`;
     label = `#${prNumber}`;
   } else {
     return NextResponse.json({ error: 'Missing prNumber or prUrl' }, { status: 400 });

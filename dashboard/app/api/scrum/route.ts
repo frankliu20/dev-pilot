@@ -14,7 +14,7 @@ import {
   classifyPRAction,
 } from '@/lib/github';
 import { getWorkspace } from '@/lib/config';
-import { REPO } from '@/lib/types';
+import { REPO, REPO_URL } from '@/lib/types';
 import { issueCommentArgs, getCliBinary } from '@/lib/git-provider';
 
 const execAsync = promisify(exec);
@@ -109,7 +109,7 @@ export async function GET() {
         : 'waiting review';
 
     const issueMatch = pr.title.match(/#(\d+)/);
-    const prUrl = pr.url || `https://github.com/${REPO}/pull/${pr.number}`;
+    const prUrl = pr.url || `${REPO_URL}/pull/${pr.number}`;
     items.push({
       number: pr.number,
       title: pr.title,
@@ -128,7 +128,7 @@ export async function GET() {
   for (const pr of openPRsRaw) {
     const m = pr.title.match(/#(\d+)/);
     if (m) {
-      issueToPR.set(parseInt(m[1]), { number: pr.number, url: pr.url || `https://github.com/${REPO}/pull/${pr.number}` });
+      issueToPR.set(parseInt(m[1]), { number: pr.number, url: pr.url || `${REPO_URL}/pull/${pr.number}` });
     }
   }
   for (const pr of mergedPRs) {
@@ -154,7 +154,7 @@ export async function GET() {
     items.push({
       number: issue.number,
       title: issue.title,
-      url: issue.url || `https://github.com/${REPO}/issues/${issue.number}`,
+      url: issue.url || `${REPO_URL}/issues/${issue.number}`,
       status: isBlocked ? 'blocker' : 'ongoing',
       summary: isBlocked ? 'Blocked — see issue labels' : 'In progress, no PR yet',
       kind: 'issue',

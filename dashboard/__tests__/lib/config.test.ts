@@ -206,6 +206,86 @@ describe('config', () => {
     });
   });
 
+  describe('getRepoSlug()', () => {
+    it('returns bare slug as-is', async () => {
+      const fs = await mockFs();
+      const yaml = await mockYaml();
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue('ok' as any);
+      vi.mocked(yaml.load).mockReturnValue({
+        workspace: '/ws',
+        repos: ['owner/repo'],
+        skills: [],
+      });
+
+      const { getRepoSlug } = await importConfig();
+      expect(getRepoSlug()).toBe('owner/repo');
+    });
+
+    it('extracts slug from full GitHub URL', async () => {
+      const fs = await mockFs();
+      const yaml = await mockYaml();
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue('ok' as any);
+      vi.mocked(yaml.load).mockReturnValue({
+        workspace: '/ws',
+        repos: ['https://github.com/myorg/myrepo'],
+        skills: [],
+      });
+
+      const { getRepoSlug } = await importConfig();
+      expect(getRepoSlug()).toBe('myorg/myrepo');
+    });
+
+    it('extracts slug from GitLab self-hosted URL', async () => {
+      const { getRepoSlug } = await importConfig();
+      expect(getRepoSlug('https://gitlab.mycompany.com/team/project')).toBe('team/project');
+    });
+
+    it('extracts slug from Azure DevOps URL', async () => {
+      const { getRepoSlug } = await importConfig();
+      expect(getRepoSlug('https://dev.azure.com/org/project/_git/repo')).toBe('org/project');
+    });
+
+    it('accepts explicit repo param over config default', async () => {
+      const fs = await mockFs();
+      const yaml = await mockYaml();
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue('ok' as any);
+      vi.mocked(yaml.load).mockReturnValue({
+        workspace: '/ws',
+        repos: ['https://github.com/default/repo'],
+        skills: [],
+      });
+
+      const { getRepoSlug } = await importConfig();
+      expect(getRepoSlug('https://gitlab.com/other/repo')).toBe('other/repo');
+    });
+  });
+
+  describe('getPlatform()', () => {
+    it('returns github by default', async () => {
+      const { getPlatform } = await importConfig();
+      expect(getPlatform()).toBe('github');
+    });
+
+    it('returns configured platform', async () => {
+      const fs = await mockFs();
+      const yaml = await mockYaml();
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readFileSync).mockReturnValue('ok' as any);
+      vi.mocked(yaml.load).mockReturnValue({
+        workspace: '/ws',
+        repos: [],
+        skills: [],
+        platform: 'gitlab',
+      });
+
+      const { getPlatform } = await importConfig();
+      expect(getPlatform()).toBe('gitlab');
+    });
+  });
+
   describe('getDefaults()', () => {
     it('returns defaults from config', async () => {
       const fs = await mockFs();

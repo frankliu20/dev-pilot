@@ -230,35 +230,62 @@ async function main() {
     const PLATFORM_INSTALL = {
       github: 'https://cli.github.com',
       gitlab: 'https://gitlab.com/gitlab-org/cli',
-      azdevops: 'https://aka.ms/azure-cli (+ az devops extension)',
+      azdevops: 'https://aka.ms/azure-cli',
+    };
+    const PLATFORM_AUTH = {
+      github: 'gh auth login',
+      gitlab: 'glab auth login',
+      azdevops: 'az login',
     };
 
     console.log('  Git platforms:');
-    console.log('    1) github  — GitHub (uses gh CLI)');
-    console.log('    2) gitlab  — GitLab (uses glab CLI)');
+    console.log('    1) github  — GitHub / GitHub Enterprise (uses gh CLI)');
+    console.log('    2) gitlab  — GitLab / GitLab self-hosted (uses glab CLI)');
     console.log('    3) azdevops — Azure DevOps (uses az CLI)');
     const platformAnswer = await askQuestion('  Platform [1]: ');
     const platformMap = { '1': 'github', '2': 'gitlab', '3': 'azdevops', '': 'github' };
     config.platform = platformMap[platformAnswer] || 'github';
 
-    // Check CLI availability
+    // Validate CLI is installed (blocking)
     const cliBin = PLATFORM_CLI[config.platform];
     try {
       execSync(`${cliBin} --version`, { stdio: 'pipe' });
       console.log(`  ✓ ${cliBin} CLI detected`);
     } catch {
-      console.log(`  ⚠ ${cliBin} CLI not found. Install it: ${PLATFORM_INSTALL[config.platform]}`);
-      console.log(`    Then authenticate: ${cliBin === 'az' ? 'az login && az devops configure --defaults organization=https://dev.azure.com/YOUR_ORG' : `${cliBin} auth login`}`);
+      console.error(`  ✗ ${cliBin} CLI not found!`);
+      console.error(`    Install: ${PLATFORM_INSTALL[config.platform]}`);
+      console.error(`    Then authenticate: ${PLATFORM_AUTH[config.platform]}`);
+      process.exit(1);
     }
 
-    // Repos
+    // Verify authentication
+    try {
+      if (config.platform === 'github') {
+        execSync('gh auth status', { stdio: 'pipe' });
+      } else if (config.platform === 'gitlab') {
+        execSync('glab auth status', { stdio: 'pipe' });
+      } else {
+        execSync('az account show', { stdio: 'pipe' });
+      }
+      console.log(`  ✓ ${cliBin} authenticated`);
+    } catch {
+      console.log(`  ⚠ ${cliBin} not authenticated. Run: ${PLATFORM_AUTH[config.platform]}`);
+    }
+
+    // Repos — full URL
+    const PLATFORM_EXAMPLES = {
+      github: 'https://github.com/your-org/your-repo',
+      gitlab: 'https://gitlab.com/your-group/your-project  (or self-hosted URL)',
+      azdevops: 'https://dev.azure.com/your-org/your-project/_git/your-repo',
+    };
     config.repos = [];
     if (repoArg) {
       config.repos.push(repoArg);
     } else {
-      console.log('  Add GitHub repos (owner/repo format). Empty line to finish:');
+      console.log(`  Add repos (full URL). Example: ${PLATFORM_EXAMPLES[config.platform]}`);
+      console.log('  Empty line to finish:');
       while (true) {
-        const repo = await askQuestion('    repo: ');
+        const repo = await askQuestion('    repo URL: ');
         if (!repo) break;
         config.repos.push(repo);
       }
@@ -360,7 +387,7 @@ async function main() {
   if (config.repos && config.repos.length > 0) {
     console.log('Repos:');
     for (const repo of config.repos) {
-      const repoName = repo.split('/').pop();
+      const repoName = repo.replace(/\.git$/, '').split('/').pop();
       const repoDir = path.join(workspace, repoName);
       if (fs.existsSync(repoDir)) {
         console.log(`  [SKIP]   ${repoName} (already exists at ${repoDir})`);
@@ -369,15 +396,8 @@ async function main() {
           ? 'y'  // Non-interactive: auto-clone
           : await askQuestion(`  Clone ${repo}? (Y/n): `);
         if (clone.toLowerCase() !== 'n') {
-          const CLONE_HOSTS = {
-            github: 'https://github.com/',
-            gitlab: 'https://gitlab.com/',
-            azdevops: 'https://dev.azure.com/',
-          };
-          const platform = config.platform || 'github';
-          const gitUrl = repo.startsWith('https://')
-            ? (repo.endsWith('.git') ? repo : `${repo}.git`)
-            : `${CLONE_HOSTS[platform]}${repo}.git`;
+          // Repos are stored as full URLs; ensure .git suffix for cloning
+          const gitUrl = repo.endsWith('.git') ? repo : `${repo}.git`;
           console.log(`  [CLONE]  ${gitUrl}`);
           try {
             execSync(`git clone ${gitUrl}`, { cwd: workspace, stdio: 'inherit' });

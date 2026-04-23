@@ -12,9 +12,7 @@ function loadPilotEnv(): Record<string, string> {
 
   try {
     const config = yaml.load(readFileSync(pilotYaml, 'utf-8')) as Record<string, unknown>;
-    const repos = ((config.repos as string[]) || []).map((r) =>
-      r.replace(/^https?:\/\/github\.com\//, '')
-    );
+    const repos = (config.repos as string[]) || [];
     return {
       NEXT_PUBLIC_GITHUB_REPO: repos[0] || '',
       NEXT_PUBLIC_GITHUB_REPOS: JSON.stringify(repos),

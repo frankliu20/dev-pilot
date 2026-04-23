@@ -50,24 +50,40 @@ export function getCliBinary(): string {
 
 // ── Repo URL helpers ─────────────────────────────────────────────────
 
-const HOST_PREFIX: Record<Platform, string> = {
-  github: 'https://github.com/',
-  gitlab: 'https://gitlab.com/',
-  azdevops: 'https://dev.azure.com/',
-};
-
-/** Build a web URL for a repo slug (owner/repo). */
+/**
+ * Build a web URL for a repo.
+ * Repos are stored as full URLs in pilot.yaml, so just return as-is.
+ * Falls back to GitHub for bare owner/repo slugs (backward compat).
+ */
 export function repoUrl(slug: string): string {
-  return `${HOST_PREFIX[getPlatform()]}${slug}`;
+  if (slug.startsWith('https://') || slug.startsWith('http://')) {
+    return slug;
+  }
+  // Bare slug fallback for backward compatibility
+  return `https://github.com/${slug}`;
 }
 
-/** Clone URL for a repo slug. */
-export function cloneUrl(slug: string): string {
-  const platform = getPlatform();
-  if (slug.startsWith('https://')) {
-    return slug.endsWith('.git') ? slug : `${slug}.git`;
+/** Clone URL for a repo. Repos are already full URLs; just ensure .git suffix. */
+export function cloneUrl(repo: string): string {
+  if (repo.startsWith('https://') || repo.startsWith('http://')) {
+    return repo.endsWith('.git') ? repo : `${repo}.git`;
   }
-  return `${HOST_PREFIX[platform]}${slug}.git`;
+  // Bare slug fallback
+  return `https://github.com/${repo}.git`;
+}
+
+/**
+ * Extract owner/repo slug from a full URL.
+ * Works with any git host (GitHub, GitLab, Azure DevOps, self-hosted).
+ */
+export function repoSlugFromUrl(url: string): string {
+  // Strip protocol and host
+  const stripped = url
+    .replace(/^https?:\/\/[^/]+\//, '')  // remove host
+    .replace(/\/_git\//, '/')             // Azure DevOps: /org/project/_git/repo → /org/project/repo
+    .replace(/\.git$/, '')                // remove .git suffix
+    .replace(/\/(issues|pulls?|merge_requests|pipelines|actions|_apis).*$/, ''); // strip trailing paths
+  return stripped;
 }
 
 // ── Issue commands ───────────────────────────────────────────────────
@@ -197,19 +213,30 @@ export function supportsGraphQL(): boolean {
   return getPlatform() === 'github';
 }
 
-/** Extract owner/name from a platform-specific URL. */
+/**
+ * Extract owner/name from any git platform URL.
+ * Handles GitHub, GitLab (including self-hosted), Azure DevOps, etc.
+ * Returns the first two meaningful path segments as "owner/repo".
+ */
 export function repoFromUrl(url: string): string | null {
-  // GitHub: https://github.com/owner/repo/...
-  const ghMatch = url.match(/github\.com\/([^/]+\/[^/]+)\//);
-  if (ghMatch) return ghMatch[1];
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split('/').filter(Boolean);
 
-  // GitLab: https://gitlab.com/owner/repo/...
-  const glMatch = url.match(/gitlab\.com\/([^/]+\/[^/]+)\//);
-  if (glMatch) return glMatch[1];
+    // Azure DevOps: /org/project/_git/repo → use org/project
+    const gitIdx = parts.indexOf('_git');
+    if (gitIdx >= 2) {
+      return `${parts[gitIdx - 2]}/${parts[gitIdx - 1]}`;
+    }
 
-  // Azure DevOps: https://dev.azure.com/org/project/...
-  const azMatch = url.match(/dev\.azure\.com\/([^/]+\/[^/]+)\//);
-  if (azMatch) return azMatch[1];
-
-  return null;
+    // Generic: /owner/repo/... → owner/repo
+    if (parts.length >= 2) {
+      // Strip .git suffix from repo name
+      const repo = parts[1].replace(/\.git$/, '');
+      return `${parts[0]}/${repo}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }

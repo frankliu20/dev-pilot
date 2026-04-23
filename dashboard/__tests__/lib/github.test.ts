@@ -33,9 +33,11 @@ vi.mock('@/lib/config', () => ({
   getConfig: vi.fn(() => ({
     workspace: '/mock/workspace',
     repos: ['owner/repo'],
+    platform: 'github',
     skills: [],
   })),
   getRepo: vi.fn(() => 'owner/repo'),
+  getRepoSlug: vi.fn((repo?: string) => repo || 'owner/repo'),
   getReviewRepos: vi.fn(() => ['owner/repo']),
   getWorkspace: vi.fn(() => '/mock/workspace'),
 }));
