@@ -420,39 +420,27 @@ async function main() {
   }
   console.log('');
 
-  // 8. Merge native hooks into settings.json (non-destructive)
-  console.log('Native hooks:');
-  const hooksSrc = path.join(SRC_DIR, 'framework', 'settings', 'hooks.json');
-  const settingsPath = path.join(CLAUDE_DIR, 'settings.json');
-  if (fs.existsSync(hooksSrc)) {
-    const hooksConfig = JSON.parse(fs.readFileSync(hooksSrc, 'utf-8'));
-    let settings = {};
-    if (fs.existsSync(settingsPath)) {
-      try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8')); } catch { }
-    }
-    // Deep merge hooks — append to existing arrays, don't replace
-    if (hooksConfig.hooks) {
-      if (!settings.hooks) settings.hooks = {};
-      for (const [event, entries] of Object.entries(hooksConfig.hooks)) {
-        if (!settings.hooks[event]) {
-          settings.hooks[event] = entries;
-        } else {
-          // Check if our hook is already present (by command string) to avoid duplicates
-          for (const entry of entries) {
-            const cmdStr = JSON.stringify(entry);
-            const exists = settings.hooks[event].some(e => JSON.stringify(e) === cmdStr);
-            if (!exists) {
-              settings.hooks[event].push(entry);
-            }
-          }
-        }
+  // 8. Install git hooks into this repo
+  console.log('Git hooks:');
+  const hooksSrc = path.join(SRC_DIR, 'framework', 'hooks');
+  const selfGitHooks = path.join(SRC_DIR, '.git', 'hooks');
+  if (fs.existsSync(hooksSrc) && fs.existsSync(selfGitHooks)) {
+    const hookFiles = fs.readdirSync(hooksSrc).filter(f => !f.startsWith('.'));
+    for (const hookFile of hookFiles) {
+      const dest = path.join(selfGitHooks, hookFile);
+      const src = path.join(hooksSrc, hookFile);
+      if (fs.existsSync(dest) && !force) {
+        console.log(`  [SKIP]   .git/hooks/${hookFile} (already exists)`);
+        skipped++;
+      } else {
+        fs.copyFileSync(src, dest);
+        try { fs.chmodSync(dest, 0o755); } catch { /* Windows may not support chmod */ }
+        console.log(`  [INSTALL] .git/hooks/${hookFile}`);
+        installed++;
       }
     }
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
-    console.log('  [INSTALL] Merged hooks into settings.json');
-    installed++;
   } else {
-    console.log('  (no hooks config found)');
+    console.log('  (no hooks found)');
   }
   console.log('');
 
