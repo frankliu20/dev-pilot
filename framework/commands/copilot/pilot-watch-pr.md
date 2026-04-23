@@ -137,42 +137,28 @@ Maintain a counter per PR per fix type. Persist in `$WS/logs/auto-fix-state.json
 
 Only trigger when CI **newly failed** (not already failing from last cycle with same error).
 
-1. **Fetch failed CI logs**:
+1. **Fetch failed CI logs** (to include as context):
 ```bash
 FAILED_RUN=$(gh run list --repo $REPO_SLUG --branch <branch> --status failure --limit 1 --json databaseId --jq '.[0].databaseId')
-gh run view $FAILED_RUN --repo $REPO_SLUG --log-failed 2>&1 | tail -200
+CI_LOG=$(gh run view $FAILED_RUN --repo $REPO_SLUG --log-failed 2>&1 | tail -200)
 ```
 
-2. **Locate or create the worktree**:
-```bash
-WORKTREE="$WS/worktrees/issue-<linked-issue-number>"
-if [ ! -d "$WORKTREE" ]; then
-  cd "$WS/<repo-name>"
-  git fetch origin
-  git worktree add "$WORKTREE" origin/<branch>
-fi
-cd "$WORKTREE"
-git pull origin <branch>
+2. **Invoke `/pilot-dev-issue --auto`** to fix in the existing worktree:
 ```
+/pilot-dev-issue --auto CI failure on PR #<N> (branch: <branch>). Fix the following CI error and push to the existing branch.
 
-3. **Fix the issue inline** (Copilot does not have Agent tool):
-   - Analyze the CI log to identify root cause (build error, test failure, lint error)
-   - `cd` into the worktree and fix the code — minimal changes only
-   - Run the build command to verify the fix
-   - Stage, commit, and push:
-   ```bash
-   git add <files>
-   git commit -m "fix(ci): <description of fix>"
-   git push origin <branch>
-   ```
+CI log (last 200 lines):
+<CI_LOG>
+```
+`pilot-dev-issue --auto` will: reuse the existing worktree for the branch, analyze the failure, fix the code, build-verify, commit, and push — all without user prompts.
 
-4. **After fix**:
+3. **After completion**:
    - Increment `ci_attempts` for this PR
    - Log event: `ci_auto_fix`
    - Update notification: "Auto-fix pushed, waiting for CI..."
    - Next cycle will pick up the new CI result
 
-5. **If max attempts (3) reached or fix cannot be determined**:
+4. **If max attempts (3) reached or fix cannot be determined**:
    - Write notification asking user to intervene
    - Log `auto_fix_blocked` event
    - Stop auto-fixing this PR's CI
@@ -181,44 +167,34 @@ git pull origin <branch>
 
 Only trigger when **new** unresolved comments appear (count increased since last cycle).
 
-1. **Fetch full comment details**:
+1. **Fetch unresolved comment details** (to include as context):
 ```bash
-gh api graphql -f query='
+COMMENTS=$(gh api graphql -f query='
 query($owner:String!,$repo:String!,$number:Int!) {
   repository(owner:$owner,name:$repo) {
     pullRequest(number:$number) {
       reviewThreads(first:50) {
         nodes {
-          id
-          isResolved
-          path
-          line
-          comments(first:10) {
-            nodes { body author { login } createdAt }
-          }
+          isResolved path line
+          comments(first:10) { nodes { body author { login } } }
         }
       }
     }
   }
-}' -f owner="$OWNER" -f repo="$REPO_NAME" -F number=$PR_NUMBER
+}' -f owner="$OWNER" -f repo="$REPO_NAME" -F number=$PR_NUMBER)
 ```
 
-2. **Locate or create the worktree** (same as CI fix above).
+2. **Invoke `/pilot-dev-issue --auto`**:
+```
+/pilot-dev-issue --auto Address unresolved review comments on PR #<N> (branch: <branch>). Fix the code as requested and push to the existing branch.
 
-3. **Fix inline**:
-   - Read each unresolved comment and understand the reviewer's request
-   - Make the requested code changes in the worktree
-   - Run the build command to verify
-   - Stage, commit, and push:
-   ```bash
-   git add <files>
-   git commit -m "fix(review): address review comments on PR #<N>"
-   git push origin <branch>
-   ```
+Unresolved comments:
+<COMMENTS>
+```
 
-4. **After fix**: increment `comment_attempts`, log event, update notification.
+3. **After completion**: increment `comment_attempts`, log event, update notification.
 
-5. **If max attempts (3) reached**: same as CI — notify user and stop.
+4. **If max attempts (3) reached**: same as CI — notify user and stop.
 
 ## Dashboard Notifications
 
@@ -311,9 +287,10 @@ Event types: `review_comments`, `ready_to_merge`, `pr_merged`, `ci_failure`, `ci
 4. **Only elaborate on changes** — don't repeat known status
 5. **Never auto-merge** — only notify
 6. **My PRs only** — ignore other people's PRs
-7. **Auto-fix CI is on by default** — disable via `watch_pr.auto_fix_ci: false` in `pilot.yaml`
-8. **Auto-fix comments is off by default** — enable via `watch_pr.auto_fix_comments: true` in `pilot.yaml`
-9. **Max 3 auto-fix attempts** per PR per fix type — then stop and notify user
-10. **Never force push** — all fixes are new commits
-11. **Log all auto-fix actions** — every fix attempt is logged
-12. **Notifications are fire-and-forget** — don't wait for terminal input
+7. **Auto-fix delegates to `/pilot-dev-issue --auto`** — reuses existing worktrees, full fix pipeline
+8. **Auto-fix CI is on by default** — disable via `watch_pr.auto_fix_ci: false` in `pilot.yaml`
+9. **Auto-fix comments is off by default** — enable via `watch_pr.auto_fix_comments: true` in `pilot.yaml`
+10. **Max 3 auto-fix attempts** per PR per fix type — then stop and notify user
+11. **Never force push** — all fixes are new commits
+12. **Log all auto-fix actions** — every fix attempt is logged
+13. **Notifications are fire-and-forget** — don't wait for terminal input
