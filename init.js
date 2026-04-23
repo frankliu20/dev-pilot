@@ -318,7 +318,17 @@ async function main() {
   }
   console.log('');
 
-  // 5. (Agents removed — now built-in subagent_types in Claude Code)
+  // 5. Install framework — agents (shared by both Claude and Copilot)
+  console.log('Agents:');
+  const agentsSrc = path.join(SRC_DIR, 'framework', 'agents');
+  const agentsDest = path.join(CLAUDE_DIR, 'agents');
+  ensureDir(agentsDest);
+  if (fs.existsSync(agentsSrc)) {
+    const files = fs.readdirSync(agentsSrc).filter(f => f.endsWith('.md'));
+    for (const file of files) {
+      copyFile(path.join(agentsSrc, file), path.join(agentsDest, file));
+    }
+  }
   console.log('');
 
   // 6. Install activated skill packs
