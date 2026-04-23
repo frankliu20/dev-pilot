@@ -291,28 +291,28 @@ async function main() {
   }
   console.log('');
 
-  // 4b. Install Copilot-specific commands (only where they differ from Claude)
+  // 4b. Install Copilot-specific commands (where they differ or are unique)
   console.log('Commands (Copilot CLI):');
   const copilotCommandsSrc = path.join(SRC_DIR, 'framework', 'commands', 'copilot');
   const copilotCommandsDest = path.join(COPILOT_DIR, 'commands');
   if (fs.existsSync(copilotCommandsSrc)) {
     const copilotFiles = fs.readdirSync(copilotCommandsSrc).filter(f => f.endsWith('.md'));
-    let hasDiff = false;
+    let copiedCount = 0;
     for (const file of copilotFiles) {
       const claudeVersion = path.join(claudeCommandsSrc, file);
       const copilotVersion = path.join(copilotCommandsSrc, file);
-      // Only copy to ~/.copilot/ if the copilot version differs from claude version
+      // Skip if identical claude version exists — Copilot reads ~/.claude/ for those
       if (fs.existsSync(claudeVersion)) {
         const claudeContent = fs.readFileSync(claudeVersion, 'utf-8');
         const copilotContent = fs.readFileSync(copilotVersion, 'utf-8');
-        if (claudeContent !== copilotContent) {
-          ensureDir(copilotCommandsDest);
-          copyFile(copilotVersion, path.join(copilotCommandsDest, file));
-          hasDiff = true;
-        }
+        if (claudeContent === copilotContent) continue;
       }
+      // Different or copilot-only → copy to ~/.copilot/
+      ensureDir(copilotCommandsDest);
+      copyFile(copilotVersion, path.join(copilotCommandsDest, file));
+      copiedCount++;
     }
-    if (!hasDiff) {
+    if (copiedCount === 0) {
       console.log('  (no differences — Copilot uses ~/.claude/ commands)');
     }
   }
