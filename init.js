@@ -3,8 +3,9 @@
 /**
  * Dev Pilot — Init Script
  *
- * Reads pilot.yaml config, then installs the framework (commands, agents)
- * and activated skill packs into ~/.claude/.
+ * Reads pilot.yaml config, then installs the framework (commands, skills, hooks)
+ * into ~/.claude/. Claude-native commands go to ~/.claude/commands/.
+ * Copilot-specific commands (where they differ) go to ~/.copilot/commands/.
  *
  * Usage:
  *   node init.js                          # Interactive setup
@@ -22,6 +23,7 @@ const { execSync } = require('child_process');
 
 // --- Config ---
 const CLAUDE_DIR = path.join(os.homedir(), '.claude');
+const COPILOT_DIR = path.join(os.homedir(), '.copilot');
 const PILOT_YAML = path.join(CLAUDE_DIR, 'pilot.yaml');
 const SRC_DIR = __dirname;
 const force = process.argv.includes('--force');
@@ -276,30 +278,47 @@ async function main() {
   ensureDir(workspace);
   ensureDir(path.join(workspace, 'logs'));
 
-  // 4. Install framework — commands
-  console.log('Commands:');
-  const commandsSrc = path.join(SRC_DIR, 'framework', 'commands');
+  // 4. Install framework — commands (dual-platform)
+  console.log('Commands (Claude Code):');
+  const claudeCommandsSrc = path.join(SRC_DIR, 'framework', 'commands', 'claude');
   const commandsDest = path.join(CLAUDE_DIR, 'commands');
   ensureDir(commandsDest);
-  if (fs.existsSync(commandsSrc)) {
-    const files = fs.readdirSync(commandsSrc).filter(f => f.endsWith('.md'));
+  if (fs.existsSync(claudeCommandsSrc)) {
+    const files = fs.readdirSync(claudeCommandsSrc).filter(f => f.endsWith('.md'));
     for (const file of files) {
-      copyFile(path.join(commandsSrc, file), path.join(commandsDest, file));
+      copyFile(path.join(claudeCommandsSrc, file), path.join(commandsDest, file));
     }
   }
   console.log('');
 
-  // 5. Install framework — agents
-  console.log('Agents:');
-  const agentsSrc = path.join(SRC_DIR, 'framework', 'agents');
-  const agentsDest = path.join(CLAUDE_DIR, 'agents');
-  ensureDir(agentsDest);
-  if (fs.existsSync(agentsSrc)) {
-    const files = fs.readdirSync(agentsSrc).filter(f => f.endsWith('.md'));
-    for (const file of files) {
-      copyFile(path.join(agentsSrc, file), path.join(agentsDest, file));
+  // 4b. Install Copilot-specific commands (only where they differ from Claude)
+  console.log('Commands (Copilot CLI):');
+  const copilotCommandsSrc = path.join(SRC_DIR, 'framework', 'commands', 'copilot');
+  const copilotCommandsDest = path.join(COPILOT_DIR, 'commands');
+  if (fs.existsSync(copilotCommandsSrc)) {
+    const copilotFiles = fs.readdirSync(copilotCommandsSrc).filter(f => f.endsWith('.md'));
+    let hasDiff = false;
+    for (const file of copilotFiles) {
+      const claudeVersion = path.join(claudeCommandsSrc, file);
+      const copilotVersion = path.join(copilotCommandsSrc, file);
+      // Only copy to ~/.copilot/ if the copilot version differs from claude version
+      if (fs.existsSync(claudeVersion)) {
+        const claudeContent = fs.readFileSync(claudeVersion, 'utf-8');
+        const copilotContent = fs.readFileSync(copilotVersion, 'utf-8');
+        if (claudeContent !== copilotContent) {
+          ensureDir(copilotCommandsDest);
+          copyFile(copilotVersion, path.join(copilotCommandsDest, file));
+          hasDiff = true;
+        }
+      }
+    }
+    if (!hasDiff) {
+      console.log('  (no differences — Copilot uses ~/.claude/ commands)');
     }
   }
+  console.log('');
+
+  // 5. (Agents removed — now built-in subagent_types in Claude Code)
   console.log('');
 
   // 6. Install activated skill packs
@@ -391,27 +410,39 @@ async function main() {
   }
   console.log('');
 
-  // 8. Install git hooks into this repo
-  console.log('Git hooks:');
-  const hooksSrc = path.join(SRC_DIR, 'framework', 'hooks');
-  const selfGitHooks = path.join(SRC_DIR, '.git', 'hooks');
-  if (fs.existsSync(hooksSrc) && fs.existsSync(selfGitHooks)) {
-    const hookFiles = fs.readdirSync(hooksSrc).filter(f => !f.startsWith('.'));
-    for (const hookFile of hookFiles) {
-      const dest = path.join(selfGitHooks, hookFile);
-      const src = path.join(hooksSrc, hookFile);
-      if (fs.existsSync(dest) && !force) {
-        console.log(`  [SKIP]   .git/hooks/${hookFile} (already exists)`);
-        skipped++;
-      } else {
-        fs.copyFileSync(src, dest);
-        try { fs.chmodSync(dest, 0o755); } catch { /* Windows may not support chmod */ }
-        console.log(`  [INSTALL] .git/hooks/${hookFile}`);
-        installed++;
+  // 8. Merge native hooks into settings.json (non-destructive)
+  console.log('Native hooks:');
+  const hooksSrc = path.join(SRC_DIR, 'framework', 'settings', 'hooks.json');
+  const settingsPath = path.join(CLAUDE_DIR, 'settings.json');
+  if (fs.existsSync(hooksSrc)) {
+    const hooksConfig = JSON.parse(fs.readFileSync(hooksSrc, 'utf-8'));
+    let settings = {};
+    if (fs.existsSync(settingsPath)) {
+      try { settings = JSON.parse(fs.readFileSync(settingsPath, 'utf-8')); } catch { }
+    }
+    // Deep merge hooks — append to existing arrays, don't replace
+    if (hooksConfig.hooks) {
+      if (!settings.hooks) settings.hooks = {};
+      for (const [event, entries] of Object.entries(hooksConfig.hooks)) {
+        if (!settings.hooks[event]) {
+          settings.hooks[event] = entries;
+        } else {
+          // Check if our hook is already present (by command string) to avoid duplicates
+          for (const entry of entries) {
+            const cmdStr = JSON.stringify(entry);
+            const exists = settings.hooks[event].some(e => JSON.stringify(e) === cmdStr);
+            if (!exists) {
+              settings.hooks[event].push(entry);
+            }
+          }
+        }
       }
     }
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+    console.log('  [INSTALL] Merged hooks into settings.json');
+    installed++;
   } else {
-    console.log('  (no hooks found)');
+    console.log('  (no hooks config found)');
   }
   console.log('');
 
