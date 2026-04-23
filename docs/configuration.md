@@ -109,8 +109,6 @@ node init.js --config ~/.claude/pilot.yaml --force
 
 > **Note:** `--force` alone (without `--config`) will trigger the interactive setup wizard and create a new `pilot.yaml`, overwriting your existing one. Always pair `--force` with `--config` to preserve your configuration.
 
-Your `CLAUDE.md` is never overwritten by `init.js`.
-
 ## Environment Variables
 
 The dashboard and lib modules also read these environment variables:
