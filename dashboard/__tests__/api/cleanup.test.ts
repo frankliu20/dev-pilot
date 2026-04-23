@@ -10,7 +10,7 @@ vi.mock('child_process', () => ({
   exec: vi.fn(),
 }));
 
-vi.mock('../../../lib/config', () => ({
+vi.mock('@/lib/config', () => ({
   getWorkspace: vi.fn().mockReturnValue('/workspace'),
   getConfig: vi.fn().mockReturnValue({
     workspace: '/workspace',
@@ -86,6 +86,10 @@ describe('POST /api/cleanup', () => {
   });
 
   it('includes pull message with repo count', async () => {
+    // Reset mocks from previous tests
+    vi.mocked(existsSync).mockReset();
+    vi.mocked(readdirSync).mockReset();
+
     vi.mocked(existsSync).mockImplementation((p: unknown) => {
       const path = String(p).replace(/\\/g, '/');
       if (path.includes('/workspace') && !path.includes('.git')) return true;

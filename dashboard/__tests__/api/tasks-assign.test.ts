@@ -103,7 +103,6 @@ describe('POST /api/tasks/assign', () => {
       'https://github.com/owner/repo/issues/42',
       'normal',
       true,
-      undefined,
       'claude',
     );
   });
@@ -124,7 +123,6 @@ describe('POST /api/tasks/assign', () => {
       'issue-10',
       'https://github.com/owner/repo/issues/10',
       'auto',
-      undefined,
       undefined,
       'copilot',
     );

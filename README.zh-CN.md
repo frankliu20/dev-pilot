@@ -2,6 +2,8 @@
 
 # Dev Pilot
 
+[![PR Gate](https://github.com/frankliu20/dev-pilot/actions/workflows/pr-gate.yml/badge.svg)](https://github.com/frankliu20/dev-pilot/actions/workflows/pr-gate.yml)
+
 > ⚠️ **状态：实验性** — 本项目处于早期 alpha 阶段。API、命令和配置格式可能随时变更。
 
 **你的私人 AI 工程师团队。** 给它一个 GitHub Issue — 它自动分析、编码、测试，然后提交 PR。你只需审查和合并。

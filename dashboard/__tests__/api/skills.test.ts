@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { NextRequest } from 'next/server';
 
 vi.mock('fs/promises', () => ({
   readdir: vi.fn(),
@@ -11,6 +12,10 @@ vi.mock('os', () => ({
 
 import { GET } from '@/app/api/skills/route';
 import { readdir, readFile } from 'fs/promises';
+
+function createRequest(): NextRequest {
+  return new NextRequest(new URL('/api/skills', 'http://localhost:3000'));
+}
 
 describe('GET /api/skills', () => {
   it('returns categorized entries', async () => {
@@ -37,7 +42,7 @@ describe('GET /api/skills', () => {
 
     vi.mocked(readFile).mockResolvedValue('# Some content');
 
-    const res = await GET();
+    const res = await GET(createRequest());
     expect(res.status).toBe(200);
 
     const body = await res.json();
@@ -52,7 +57,7 @@ describe('GET /api/skills', () => {
   it('handles missing directories gracefully', async () => {
     vi.mocked(readdir).mockRejectedValue(new Error('ENOENT'));
 
-    const res = await GET();
+    const res = await GET(createRequest());
     expect(res.status).toBe(200);
 
     const body = await res.json();
@@ -72,7 +77,7 @@ describe('GET /api/skills', () => {
 
     vi.mocked(readFile).mockResolvedValue('# Test Skill Content');
 
-    const res = await GET();
+    const res = await GET(createRequest());
     const body = await res.json();
 
     const skillEntry = body.entries.find((e: { category: string }) => e.category === 'skill');
@@ -100,7 +105,7 @@ describe('GET /api/skills', () => {
 
     vi.mocked(readFile).mockRejectedValue(new Error('ENOENT'));
 
-    const res = await GET();
+    const res = await GET(createRequest());
     const body = await res.json();
 
     expect(body.entries).toHaveLength(0);
@@ -129,7 +134,7 @@ describe('GET /api/skills', () => {
 
     vi.mocked(readFile).mockResolvedValue('content');
 
-    const res = await GET();
+    const res = await GET(createRequest());
     const body = await res.json();
 
     // Order should be commands, agents, skills (as per source: [...commands, ...agents, ...skills])

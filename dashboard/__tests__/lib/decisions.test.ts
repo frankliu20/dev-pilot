@@ -12,6 +12,7 @@ vi.mock('@/lib/statusLog', () => ({
 
 import { readPendingDecisions, dismissDecision, watchDecisions } from '@/lib/decisions';
 import { deriveTasks } from '@/lib/statusLog';
+import { makeStatusLogEntry } from '../helpers/factories';
 
 beforeEach(() => {
   vi.mocked(fs.existsSync).mockReturnValue(true);
@@ -58,6 +59,7 @@ describe('readPendingDecisions', () => {
     const task = makeTask({
       taskId: 'issue-42',
       lastUpdate: '2026-04-08T10:00:00Z', // newer than decision
+      events: [makeStatusLogEntry({ timestamp: '2026-04-08T10:00:00Z', task_id: 'issue-42', type: 'task_start' })],
     });
 
     vi.mocked(deriveTasks).mockReturnValue([task]);
@@ -118,6 +120,7 @@ describe('readPendingDecisions', () => {
     const task = makeTask({
       taskId: 'issue-42',
       lastUpdate: '2026-04-08T10:00:00Z',
+      events: [makeStatusLogEntry({ timestamp: '2026-04-08T10:00:00Z', task_id: 'issue-42', type: 'task_start' })],
     });
 
     vi.mocked(deriveTasks).mockReturnValue([task]);
@@ -155,6 +158,12 @@ describe('dismissDecision', () => {
     const decision = makeDecision({ taskId: 'issue-99' });
     vi.mocked(fs.readdirSync).mockReturnValue(['issue-99.json'] as unknown as ReturnType<typeof fs.readdirSync>);
     vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(decision));
+    vi.mocked(fs.existsSync).mockImplementation((p: unknown) => {
+      const path = String(p);
+      // Return true for decisions dir, false for JSONL log files
+      if (path.endsWith('.jsonl')) return false;
+      return true;
+    });
 
     const result = dismissDecision('issue-42');
     expect(result).toBe(false);
@@ -162,6 +171,11 @@ describe('dismissDecision', () => {
 
   it('returns false when no .json files exist', () => {
     vi.mocked(fs.readdirSync).mockReturnValue([] as unknown as ReturnType<typeof fs.readdirSync>);
+    vi.mocked(fs.existsSync).mockImplementation((p: unknown) => {
+      const path = String(p);
+      if (path.endsWith('.jsonl')) return false;
+      return true;
+    });
     expect(dismissDecision('issue-42')).toBe(false);
   });
 
@@ -180,8 +194,9 @@ describe('dismissDecision', () => {
 
 describe('watchDecisions', () => {
   it('creates directory if missing and watches for .json changes', () => {
+    vi.useFakeTimers();
     vi.mocked(fs.existsSync).mockReturnValue(false);
-    const mockWatcher = { close: vi.fn() };
+    const mockWatcher = { close: vi.fn(), on: vi.fn() };
     vi.mocked(fs.watch).mockImplementation((_dir: any, listener: any) => {
       listener('change', 'task.json');
       return mockWatcher as any;
@@ -191,15 +206,17 @@ describe('watchDecisions', () => {
     const unwatch = watchDecisions(callback);
 
     expect(fs.mkdirSync).toHaveBeenCalledWith(expect.any(String), { recursive: true });
+    vi.advanceTimersByTime(300);
     expect(callback).toHaveBeenCalledOnce();
 
     unwatch();
     expect(mockWatcher.close).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
   it('does not create directory if it exists', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
-    const mockWatcher = { close: vi.fn() };
+    const mockWatcher = { close: vi.fn(), on: vi.fn() };
     vi.mocked(fs.watch).mockReturnValue(mockWatcher as any);
 
     watchDecisions(vi.fn());
@@ -207,7 +224,8 @@ describe('watchDecisions', () => {
   });
 
   it('ignores non-.json file changes', () => {
-    const mockWatcher = { close: vi.fn() };
+    vi.useFakeTimers();
+    const mockWatcher = { close: vi.fn(), on: vi.fn() };
     vi.mocked(fs.watch).mockImplementation((_dir: any, listener: any) => {
       listener('change', 'file.txt');
       return mockWatcher as any;
@@ -215,6 +233,8 @@ describe('watchDecisions', () => {
 
     const callback = vi.fn();
     watchDecisions(callback);
+    vi.advanceTimersByTime(300);
     expect(callback).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });
