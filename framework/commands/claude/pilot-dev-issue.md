@@ -32,6 +32,61 @@ The user provides ONE of:
 
 ---
 
+## Status Logging
+
+Throughout every step, append a JSON line to the task's log file `$WS/logs/<task_id>.jsonl`:
+```bash
+echo '{"timestamp":"<ISO8601>","task_id":"issue-<N>|adhoc-<date>","type":"<event_type>","phase":"<phase>","branch":"<branch>","pr_number":<N|null>,"status":"<status>","detail":"<message>"}' >> "$WS/logs/issue-<N>.jsonl"
+```
+
+Event types and when to log:
+| Event | When |
+|-------|------|
+| `task_start` | Step 2 — worktree created, branch ready |
+| `analysis_done` | Step 1 — issue understood |
+| `exploration_done` | Step 4 — code explored |
+| `plan_approved` | Step 5 — user approved plan, test strategy chosen |
+| `implementation_done` | Step 6 — code written |
+| `test_pass` | Step 7 — tests passed |
+| `test_fail` | Step 7 — tests failed (include error summary in detail) |
+| `manual_verify_waiting` | Step 7 strategy 3 — waiting for user manual verify |
+| `manual_verify_done` | Step 7 strategy 3 — user confirmed ok |
+| `pr_created` | Step 8 — PR opened (include pr_number) |
+| `blocked` | Any step — needs human intervention (include reason in detail) |
+
+## Decision Notifications
+
+**CRITICAL RULE**: Every time you stop and wait for user input — for ANY reason, in ANY step — you MUST write a decision notification file BEFORE prompting the user. The user may not be watching your terminal. The Dashboard will pop up a notification so they know you need attention.
+
+### How it works
+
+1. **Write a decision request file** to `$WS/logs/pending-decisions/<task_id>.json`:
+```bash
+mkdir -p "$WS/logs/pending-decisions"
+cat > "$WS/logs/pending-decisions/<task_id>.json" << 'DECISION'
+{
+  "taskId": "<task_id>",
+  "issueNumber": <N|null>,
+  "phase": "<current_step>",
+  "question": "<what you need from the user>",
+  "options": ["option1", "option2", "option3"],
+  "context": "<brief context to help user decide>",
+  "timestamp": "<ISO8601>"
+}
+DECISION
+```
+
+2. **Also log a status event** with type `decision_requested`.
+
+3. **After user responds**, delete the pending decision file:
+```bash
+rm -f "$WS/logs/pending-decisions/<task_id>.json"
+```
+
+**Auto mode exception**: Never write decision requests — use defaults silently.
+
+---
+
 ## Step 1: Fetch & Analyze Issue
 
 ### If given an issue URL or reference:
