@@ -136,7 +136,20 @@ echo '{"timestamp":"<ISO8601>","task_id":"pr-<N>","type":"<event>","phase":"pr_m
 Event types: `review_comments`, `ready_to_merge`, `pr_merged`
 
 #### Cleanup:
-- PR merged/closed → delete notification: `rm -f "$WS/logs/pending-decisions/pr-<N>.json"`
+- PR merged/closed → **auto-cleanup**:
+  1. Delete notification: `rm -f "$WS/logs/pending-decisions/pr-<N>.json"`
+  2. Find and remove the worktree for this PR's branch:
+     ```bash
+     # Find repo and worktree by branch name
+     cd "$WS/<repo-name>"
+     WORKTREE=$(git worktree list --porcelain | grep -B1 "branch refs/heads/<branch>" | head -1 | sed 's/worktree //')
+     if [ -n "$WORKTREE" ]; then
+       git worktree remove --force "$WORKTREE"
+       git branch -D "<branch>"
+     fi
+     ```
+  3. Also check `.claude/worktrees/` for native worktrees matching the branch
+  4. Log `pr_merged` event
 - Unresolved comments drop to 0 → delete notification
 - Same PR already has notification → overwrite with latest state
 

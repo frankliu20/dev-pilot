@@ -128,7 +128,18 @@ NOTIFICATION
 ```
 
 ### Cleanup notifications:
-- If a PR gets merged or closed → delete its notification: `rm -f "$WS/logs/pending-decisions/pr-<N>.json"`
+- If a PR gets merged or closed → **auto-cleanup**:
+  1. Delete its notification: `rm -f "$WS/logs/pending-decisions/pr-<N>.json"`
+  2. Find and remove the worktree for this PR's branch:
+     ```bash
+     cd "$WS/<repo-name>"
+     WORKTREE=$(git worktree list --porcelain | grep -B1 "branch refs/heads/<branch>" | head -1 | sed 's/worktree //')
+     if [ -n "$WORKTREE" ]; then
+       git worktree remove --force "$WORKTREE"
+       git branch -D "<branch>"
+     fi
+     ```
+  3. Log `pr_merged` event
 - If unresolved comments drop to 0 → delete the notification
 - If the same PR already has a notification → overwrite with latest state
 
