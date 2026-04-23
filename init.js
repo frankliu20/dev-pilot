@@ -342,7 +342,9 @@ async function main() {
           ? 'y'  // Non-interactive: auto-clone
           : await askQuestion(`  Clone ${repo}? (Y/n): `);
         if (clone.toLowerCase() !== 'n') {
-          const gitUrl = `https://github.com/${repo}.git`;
+          const gitUrl = repo.startsWith('https://')
+            ? (repo.endsWith('.git') ? repo : `${repo}.git`)
+            : `https://github.com/${repo}.git`;
           console.log(`  [CLONE]  ${gitUrl}`);
           try {
             execSync(`git clone ${gitUrl}`, { cwd: workspace, stdio: 'inherit' });
