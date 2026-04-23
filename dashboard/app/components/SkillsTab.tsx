@@ -41,12 +41,14 @@ export default function SkillsTab({ cliTool = 'claude' }: SkillsTabProps) {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch('/api/skills')
+    setLoading(true);
+    const platform = cliTool === 'copilot' ? 'copilot' : 'claude';
+    fetch(`/api/skills?platform=${platform}&t=${Date.now()}`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setEntries(data.entries || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [cliTool]);
 
   const filtered = useMemo(() => {
     if (filter === 'all') return entries;
