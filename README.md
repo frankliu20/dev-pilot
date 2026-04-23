@@ -1,3 +1,5 @@
+[English](README.md) | [中文](README.zh-CN.md)
+
 # Dev Pilot
 
 > ⚠️ **Status: Experimental** — This project is in early alpha. APIs, commands, and config formats may change without notice.
