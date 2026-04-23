@@ -51,15 +51,15 @@ export async function POST(request: NextRequest) {
   let label: string;
 
   if (rawPrUrl && typeof rawPrUrl === 'string') {
-    const ghPrPattern = /^https:\/\/[^/]+\/[^/]+\/[^/]+\/(pull|merge_requests)\/\d+/;
-    if (!ghPrPattern.test(rawPrUrl)) {
+    const prPattern = /^https:\/\/[^/]+\/(?:[^/]+\/)+(?:pull|merge_requests|pullrequest)\/\d+/;
+    if (!prPattern.test(rawPrUrl)) {
       return NextResponse.json(
         { error: 'Invalid PR/MR URL. Expected format: https://<host>/owner/repo/pull/123' },
         { status: 400 },
       );
     }
     prUrl = rawPrUrl.split('?')[0].split('#')[0];
-    const num = prUrl.match(/\/pull\/(\d+)/)?.[1] || 'PR';
+    const num = prUrl.match(/\/(?:pull|merge_requests|pullrequest)\/(\d+)/)?.[1] || 'PR';
     label = `#${num}`;
   } else if (prNumber && typeof prNumber === 'number') {
     prUrl = `${REPO_URL}/pull/${prNumber}`;

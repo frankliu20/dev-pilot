@@ -14,6 +14,9 @@ function loadPilotEnv(): Record<string, string> {
     const config = yaml.load(readFileSync(pilotYaml, 'utf-8')) as Record<string, unknown>;
     const repos = (config.repos as string[]) || [];
     return {
+      NEXT_PUBLIC_REPO: repos[0] || '',
+      NEXT_PUBLIC_REPOS: JSON.stringify(repos),
+      // Backward compat aliases (remove after migration)
       NEXT_PUBLIC_GITHUB_REPO: repos[0] || '',
       NEXT_PUBLIC_GITHUB_REPOS: JSON.stringify(repos),
       NEXT_PUBLIC_PLATFORM: (config.platform as string) || 'github',

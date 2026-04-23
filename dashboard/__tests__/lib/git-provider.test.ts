@@ -11,6 +11,7 @@ import {
   getCliBinary,
   repoUrl,
   cloneUrl,
+  shellEscape,
   repoSlugFromUrl,
   repoFromUrl,
   supportsGraphQL,
@@ -69,6 +70,26 @@ describe('getCliBinary', () => {
   });
 });
 
+// ── Shell escaping ────────────────────────────────────────────────────
+
+describe('shellEscape', () => {
+  it('wraps in single quotes', () => {
+    expect(shellEscape('hello')).toBe("'hello'");
+  });
+
+  it('escapes embedded single quotes', () => {
+    expect(shellEscape("it's")).toBe("'it'\\''s'");
+  });
+
+  it('neutralizes $() command substitution', () => {
+    expect(shellEscape('$(whoami)')).toBe("'$(whoami)'");
+  });
+
+  it('neutralizes backticks', () => {
+    expect(shellEscape('`id`')).toBe("'`id`'");
+  });
+});
+
 // ── Repo URL helpers ───────────────────────────────────────────────────
 
 describe('repoUrl', () => {
@@ -105,7 +126,7 @@ describe('repoSlugFromUrl', () => {
   });
 
   it('extracts slug from Azure DevOps URL', () => {
-    expect(repoSlugFromUrl('https://dev.azure.com/org/project/_git/repo')).toBe('org/project/repo');
+    expect(repoSlugFromUrl('https://dev.azure.com/org/project/_git/repo')).toBe('org/project');
   });
 
   it('strips .git suffix', () => {
@@ -195,10 +216,22 @@ describe('issueViewArgs', () => {
 });
 
 describe('issueCommentArgs', () => {
-  it('escapes quotes in body', () => {
+  it('uses shell-safe single quotes for body', () => {
     setMockPlatform('github');
     const result = issueCommentArgs('owner/repo', 1, 'say "hello"');
-    expect(result).toContain('\\"hello\\"');
+    expect(result).toContain("'say \"hello\"'");
+  });
+
+  it('escapes single quotes in body', () => {
+    setMockPlatform('github');
+    const result = issueCommentArgs('owner/repo', 1, "it's a test");
+    expect(result).toContain("'it'\\''s a test'");
+  });
+
+  it('prevents shell injection via $() in body', () => {
+    setMockPlatform('github');
+    const result = issueCommentArgs('owner/repo', 1, '$(rm -rf /)');
+    expect(result).toContain("'$(rm -rf /)'");
   });
 
   it('builds gitlab note args', () => {

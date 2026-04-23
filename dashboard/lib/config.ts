@@ -46,7 +46,7 @@ export function getConfig(): PilotConfig {
   if (!_config) {
     _config = {
       workspace: process.env.PILOT_WORKSPACE || join(homedir(), 'claude', 'workdir'),
-      repos: process.env.NEXT_PUBLIC_GITHUB_REPO ? [process.env.NEXT_PUBLIC_GITHUB_REPO] : [],
+      repos: (process.env.NEXT_PUBLIC_REPO || process.env.NEXT_PUBLIC_GITHUB_REPO) ? [process.env.NEXT_PUBLIC_REPO || process.env.NEXT_PUBLIC_GITHUB_REPO!] : [],
       skills: [],
       ai_platform: 'copilot-cli',
       defaults: {

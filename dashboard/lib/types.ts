@@ -2,7 +2,7 @@
 
 // Repo info injected by next.config.ts from pilot.yaml (client-safe)
 // REPO is the full URL (e.g., "https://github.com/owner/repo" or "https://gitlab.mycompany.com/team/project")
-export const REPO = process.env.NEXT_PUBLIC_GITHUB_REPO || '';
+export const REPO = process.env.NEXT_PUBLIC_REPO || process.env.NEXT_PUBLIC_GITHUB_REPO || '';
 export const PLATFORM = (process.env.NEXT_PUBLIC_PLATFORM || 'github') as 'github' | 'gitlab' | 'azdevops';
 
 // REPO_URL — for repos stored as full URLs, use as-is; for bare slugs, assume GitHub
@@ -25,7 +25,7 @@ export const REPO_SLUG = (() => {
 // Repos to check for review-requested PRs (from pilot.yaml via next.config.ts)
 export const REVIEW_REPOS: string[] = (() => {
   try {
-    return JSON.parse(process.env.NEXT_PUBLIC_GITHUB_REPOS || '[]');
+    return JSON.parse(process.env.NEXT_PUBLIC_REPOS || process.env.NEXT_PUBLIC_GITHUB_REPOS || '[]');
   } catch {
     return [];
   }

@@ -53,6 +53,19 @@ describe('POST /api/tasks/review-pr', () => {
     expect(body.message).toContain('#456');
   });
 
+  it('returns 200 with Azure DevOps pullrequest URL', async () => {
+    vi.mocked(openClaudeTerminal).mockReturnValue({ success: true });
+
+    const res = await POST(createRequest({
+      prUrl: 'https://dev.azure.com/org/project/_git/repo/pullrequest/42',
+    }));
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.message).toContain('#42');
+  });
+
   it('returns 400 for invalid prUrl format', async () => {
     const res = await POST(createRequest({
       prUrl: 'https://not-github.com/foo/bar',
