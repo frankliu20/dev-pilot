@@ -46,6 +46,8 @@ defaults:
 | `build.test_command` | string | auto-detect | Override test command. `{{file}}` is replaced with the test file path |
 | `build.default_branch` | string | `main` | Default branch for git operations |
 | `test_runner_skill` | string | — | Name of a custom test runner skill in `~/.claude/skills/` (advanced — for complex test workflows) |
+| `watch_pr.auto_fix_ci` | bool | `true` | Auto-fix CI failures detected by `/pilot-watch-pr` |
+| `watch_pr.auto_fix_comments` | bool | `false` | Auto-fix review comments detected by `/pilot-watch-pr` |
 
 ### Preset Configs
 
@@ -90,6 +92,22 @@ Location: `~/.claude/settings.json`
 | `Bash(gh *)` | GitHub CLI (issues, PRs, API calls) |
 
 Add project-specific permissions as needed (e.g., `Bash(mvn *)` for Java projects).
+
+## Updating / Syncing
+
+Dev Pilot is actively maintained. When the upstream repo has new commands, agents, or features, sync them to your local `~/.claude/` with:
+
+```bash
+cd dev-pilot && git pull
+node init.js --config ~/.claude/pilot.yaml --force
+```
+
+| Flag | What it does |
+|------|-------------|
+| `--config ~/.claude/pilot.yaml` | Reuses your existing configuration instead of prompting for setup |
+| `--force` | Overwrites framework files (commands, agents) with the latest versions |
+
+> **Note:** `--force` alone (without `--config`) will trigger the interactive setup wizard and create a new `pilot.yaml`, overwriting your existing one. Always pair `--force` with `--config` to preserve your configuration.
 
 ## Environment Variables
 

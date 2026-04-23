@@ -84,7 +84,7 @@ az repos pr list \
 
 #### Fetch unresolved review threads (GitHub only):
 
-For each PR that has `reviewDecision` of `CHANGES_REQUESTED` or `REVIEW_REQUIRED`:
+For each PR that has `reviewDecision` of `CHANGES_REQUESTED`, `REVIEW_REQUIRED`, or `COMMENTED`:
 ```bash
 gh api graphql -f query='
 query($owner:String!,$repo:String!,$number:Int!) {
