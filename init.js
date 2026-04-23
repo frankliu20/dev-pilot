@@ -3,8 +3,9 @@
 /**
  * Dev Pilot — Init Script
  *
- * Reads pilot.yaml config, then installs the framework (commands, agents)
- * and activated skill packs into ~/.claude/.
+ * Reads pilot.yaml config, then installs the framework (commands, skills, hooks)
+ * into ~/.claude/. Claude-native commands go to ~/.claude/commands/.
+ * Copilot-specific commands (where they differ) go to ~/.copilot/commands/.
  *
  * Usage:
  *   node init.js                          # Interactive setup
@@ -22,6 +23,7 @@ const { execSync } = require('child_process');
 
 // --- Config ---
 const CLAUDE_DIR = path.join(os.homedir(), '.claude');
+const COPILOT_DIR = path.join(os.homedir(), '.copilot');
 const PILOT_YAML = path.join(CLAUDE_DIR, 'pilot.yaml');
 const SRC_DIR = __dirname;
 const force = process.argv.includes('--force');
@@ -276,20 +278,47 @@ async function main() {
   ensureDir(workspace);
   ensureDir(path.join(workspace, 'logs'));
 
-  // 4. Install framework — commands
-  console.log('Commands:');
-  const commandsSrc = path.join(SRC_DIR, 'framework', 'commands');
+  // 4. Install framework — commands (dual-platform)
+  console.log('Commands (Claude Code):');
+  const claudeCommandsSrc = path.join(SRC_DIR, 'framework', 'commands', 'claude');
   const commandsDest = path.join(CLAUDE_DIR, 'commands');
   ensureDir(commandsDest);
-  if (fs.existsSync(commandsSrc)) {
-    const files = fs.readdirSync(commandsSrc).filter(f => f.endsWith('.md'));
+  if (fs.existsSync(claudeCommandsSrc)) {
+    const files = fs.readdirSync(claudeCommandsSrc).filter(f => f.endsWith('.md'));
     for (const file of files) {
-      copyFile(path.join(commandsSrc, file), path.join(commandsDest, file));
+      copyFile(path.join(claudeCommandsSrc, file), path.join(commandsDest, file));
     }
   }
   console.log('');
 
-  // 5. Install framework — agents
+  // 4b. Install Copilot-specific commands (where they differ or are unique)
+  console.log('Commands (Copilot CLI):');
+  const copilotCommandsSrc = path.join(SRC_DIR, 'framework', 'commands', 'copilot');
+  const copilotCommandsDest = path.join(COPILOT_DIR, 'commands');
+  if (fs.existsSync(copilotCommandsSrc)) {
+    const copilotFiles = fs.readdirSync(copilotCommandsSrc).filter(f => f.endsWith('.md'));
+    let copiedCount = 0;
+    for (const file of copilotFiles) {
+      const claudeVersion = path.join(claudeCommandsSrc, file);
+      const copilotVersion = path.join(copilotCommandsSrc, file);
+      // Skip if identical claude version exists — Copilot reads ~/.claude/ for those
+      if (fs.existsSync(claudeVersion)) {
+        const claudeContent = fs.readFileSync(claudeVersion, 'utf-8');
+        const copilotContent = fs.readFileSync(copilotVersion, 'utf-8');
+        if (claudeContent === copilotContent) continue;
+      }
+      // Different or copilot-only → copy to ~/.copilot/
+      ensureDir(copilotCommandsDest);
+      copyFile(copilotVersion, path.join(copilotCommandsDest, file));
+      copiedCount++;
+    }
+    if (copiedCount === 0) {
+      console.log('  (no differences — Copilot uses ~/.claude/ commands)');
+    }
+  }
+  console.log('');
+
+  // 5. Install framework — agents (shared by both Claude and Copilot)
   console.log('Agents:');
   const agentsSrc = path.join(SRC_DIR, 'framework', 'agents');
   const agentsDest = path.join(CLAUDE_DIR, 'agents');
