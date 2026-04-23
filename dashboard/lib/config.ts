@@ -44,7 +44,7 @@ export function getConfig(): PilotConfig {
   // Fallback to env vars and defaults
   if (!_config) {
     _config = {
-      workspace: process.env.PILOT_WORKSPACE || join(homedir(), 'claude', 'workspace'),
+      workspace: process.env.PILOT_WORKSPACE || join(homedir(), 'claude', 'workdir'),
       repos: process.env.NEXT_PUBLIC_GITHUB_REPO ? [process.env.NEXT_PUBLIC_GITHUB_REPO] : [],
       skills: [],
       ai_platform: 'copilot-cli',

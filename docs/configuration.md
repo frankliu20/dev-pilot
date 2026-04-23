@@ -12,7 +12,7 @@ Dev Pilot is configured through two files in `~/.claude/`:
 Created by `node init.js` during installation. Location: `~/.claude/pilot.yaml`
 
 ```yaml
-workspace: ~/claude/workspace
+workspace: ~/claude/workdir
 
 repos:
   - your-org/your-repo
