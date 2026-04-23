@@ -215,40 +215,22 @@ Maintain a counter per PR per fix type. Persist in `$WS/logs/auto-fix-state.json
 
 Only trigger when CI **newly failed** (not already failing from last cycle with same error).
 
-1. **Fetch failed CI logs** (to include as context, platform-specific):
-
-**GitHub:**
-```bash
-FAILED_RUN=$(gh run list --repo $REPO_SLUG --branch <branch> --status failure --limit 1 --json databaseId --jq '.[0].databaseId')
-CI_LOG=$(gh run view $FAILED_RUN --repo $REPO_SLUG --log-failed 2>&1 | tail -200)
-```
-
-**GitLab:**
-```bash
-CI_LOG=$(glab ci view --repo $REPO_SLUG --branch <branch> 2>&1 | tail -200)
-```
-
-**Azure DevOps:**
-```bash
-CI_LOG=$(az pipelines runs list --branch <branch> --status completed --result failed --top 1 --output json 2>&1 | tail -200)
-```
-
-2. **Spawn `pilot-dev-issue` with `--auto`** to fix in the existing worktree:
+1. **Spawn `pilot-dev-issue` with `--auto`**:
 ```
 Skill(
   skill="pilot-dev-issue",
-  args="--auto CI failure on PR #<N> (branch: <branch>). Fix the following CI error and push to the existing branch.\n\nCI log (last 200 lines):\n<CI_LOG>"
+  args="--auto Fix failing CI on PR #<N> (repo: $REPO_SLUG, branch: <branch>). Diagnose the CI failure and push a fix."
 )
 ```
-`pilot-dev-issue --auto` will: reuse the existing worktree for the branch, analyze the failure, fix the code, build-verify, commit, and push — all without user prompts.
+`pilot-dev-issue` will handle everything: fetch CI logs, analyze the failure, fix the code, build-verify, commit, and push.
 
-3. **After completion**:
+2. **After completion**:
    - Increment `ci_attempts` for this PR
    - Log event: `ci_auto_fix` with detail
    - Update notification: "Auto-fix pushed, waiting for CI..."
    - Next cycle will pick up the new CI result
 
-4. **If max attempts (3) reached**:
+3. **If max attempts (3) reached**:
    - Write notification asking user to intervene
    - Log `auto_fix_blocked` event
    - Stop auto-fixing this PR's CI until user dismisses or CI changes
@@ -257,34 +239,17 @@ Skill(
 
 Only trigger when **new** unresolved comments appear (count increased since last cycle).
 
-1. **Fetch unresolved comment details** (to include as context):
-```bash
-COMMENTS=$(gh api graphql -f query='
-query($owner:String!,$repo:String!,$number:Int!) {
-  repository(owner:$owner,name:$repo) {
-    pullRequest(number:$number) {
-      reviewThreads(first:50) {
-        nodes {
-          isResolved path line
-          comments(first:10) { nodes { body author { login } } }
-        }
-      }
-    }
-  }
-}' -f owner="$OWNER" -f repo="$REPO_NAME" -F number=$PR_NUMBER)
-```
-
-2. **Spawn `pilot-dev-issue` with `--auto`**:
+1. **Spawn `pilot-dev-issue` with `--auto`**:
 ```
 Skill(
   skill="pilot-dev-issue",
-  args="--auto Address unresolved review comments on PR #<N> (branch: <branch>). Fix the code as requested and push to the existing branch.\n\nUnresolved comments:\n<COMMENTS>"
+  args="--auto Address unresolved review comments on PR #<N> (repo: $REPO_SLUG, branch: <branch>). Read the comments, fix the code, and push."
 )
 ```
 
-3. **After completion**: increment `comment_attempts`, log event, update notification.
+2. **After completion**: increment `comment_attempts`, log event, update notification.
 
-4. **If max attempts (3) reached**: same as CI — notify user and stop.
+3. **If max attempts (3) reached**: same as CI — notify user and stop.
 
 #### Status log events for auto-fix:
 ```bash
