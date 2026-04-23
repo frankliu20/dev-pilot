@@ -50,19 +50,7 @@ Fixes #<issue-number>"
 
 ### Step 3: Check for PR Template
 
-Before creating the PR, check if the project has a PR template:
-
-```bash
-# Check for PR template in the repo root
-PR_TEMPLATE=""
-for tmpl in .github/PULL_REQUEST_TEMPLATE.md .github/pull_request_template.md docs/pull_request_template.md PULL_REQUEST_TEMPLATE.md; do
-  if [ -f "$tmpl" ]; then
-    PR_TEMPLATE="$tmpl"
-    break
-  fi
-done
-echo "PR_TEMPLATE=${PR_TEMPLATE:-none}"
-```
+Before creating the PR, search the repo for a pull request template file (e.g., `PULL_REQUEST_TEMPLATE.md`). Different platforms (GitHub, GitLab, Azure DevOps) store templates in different locations — look around the repo to find it.
 
 **If a PR template is found:**
 1. Read the template file
