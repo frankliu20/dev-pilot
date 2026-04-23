@@ -1,11 +1,18 @@
-// GET /api/skills — list all installed skills, agents, and commands from ~/.claude/
+// GET /api/skills — list all installed skills, agents, and commands
+// Reads commands from ~/.claude/ or ~/.copilot/ based on platform query param or pilot.yaml config
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
 
+import { getAiPlatform } from '@/lib/config';
+
 const CLAUDE_DIR = join(homedir(), '.claude');
+const COPILOT_DIR = join(homedir(), '.copilot');
+
+// Disable Next.js route caching — data depends on filesystem and query params
+export const dynamic = 'force-dynamic';
 
 interface SkillEntry {
   name: string;
@@ -41,12 +48,19 @@ async function readEntries(dir: string, category: SkillEntry['category']): Promi
   return entries;
 }
 
-export async function GET() {
-  console.log('[skills] Loading skills, agents, and commands');
+export async function GET(request: NextRequest) {
+  // Determine platform: query param > pilot.yaml config
+  const platformParam = request.nextUrl.searchParams.get('platform');
+  const isCopilot = platformParam === 'copilot' || (!platformParam && getAiPlatform() === 'copilot-cli');
+
+  // Read everything from the selected platform's directory
+  const baseDir = isCopilot ? COPILOT_DIR : CLAUDE_DIR;
+
+  console.log(`[skills] Loading skills, agents, and commands (platform: ${isCopilot ? 'copilot' : 'claude'}, base: ${baseDir})`);
   const [skills, agents, commands] = await Promise.all([
-    readEntries(join(CLAUDE_DIR, 'skills'), 'skill'),
-    readEntries(join(CLAUDE_DIR, 'agents'), 'agent'),
-    readEntries(join(CLAUDE_DIR, 'commands'), 'command'),
+    readEntries(join(baseDir, 'skills'), 'skill'),
+    readEntries(join(baseDir, 'agents'), 'agent'),
+    readEntries(join(baseDir, 'commands'), 'command'),
   ]);
 
   // Detect personal skills by scanning the personal-skills/ directory in the project root

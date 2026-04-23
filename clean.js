@@ -141,9 +141,16 @@ function main() {
       if (path.resolve(wtPath) === path.resolve(repo)) continue;
 
       hasWorktrees = true;
-      console.log(`  [REMOVE] ${repoName} worktree: ${wtPath}`);
+      // Extract branch name from worktree info
+      const branchLine = lines.find(l => l.startsWith('branch '));
+      const branchRef = branchLine ? branchLine.replace('branch ', '') : null;
+      const branchName = branchRef ? branchRef.replace('refs/heads/', '') : null;
+      console.log(`  [REMOVE] ${repoName} worktree: ${wtPath}${branchName ? ` (branch: ${branchName})` : ''}`);
       if (force) {
         run(`git worktree remove --force "${wtPath}"`, { cwd: repo });
+        if (branchName) {
+          run(`git branch -D "${branchName}"`, { cwd: repo });
+        }
       }
       removed++;
     }
