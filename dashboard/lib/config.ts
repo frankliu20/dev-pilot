@@ -14,6 +14,7 @@ export interface PilotConfig {
   workspace: string;
   repos: string[];
   skills: string[];
+  platform?: 'github' | 'gitlab' | 'azdevops';
   ai_platform?: 'copilot-cli' | 'claude-code';
   defaults?: PilotDefaults;
   build?: {
@@ -45,7 +46,7 @@ export function getConfig(): PilotConfig {
   if (!_config) {
     _config = {
       workspace: process.env.PILOT_WORKSPACE || join(homedir(), 'claude', 'workdir'),
-      repos: process.env.NEXT_PUBLIC_GITHUB_REPO ? [process.env.NEXT_PUBLIC_GITHUB_REPO] : [],
+      repos: (process.env.NEXT_PUBLIC_REPO || process.env.NEXT_PUBLIC_GITHUB_REPO) ? [process.env.NEXT_PUBLIC_REPO || process.env.NEXT_PUBLIC_GITHUB_REPO!] : [],
       skills: [],
       ai_platform: 'copilot-cli',
       defaults: {
@@ -79,6 +80,24 @@ export function getRepo(): string {
   return getConfig().repos[0] || '';
 }
 
+/**
+ * Extract owner/repo slug from a full repo URL.
+ * For bare slugs (backward compat), returns as-is.
+ */
+export function getRepoSlug(repo?: string): string {
+  const r = repo || getRepo();
+  if (!r.startsWith('http')) return r;
+  try {
+    const parts = new URL(r).pathname.split('/').filter(Boolean);
+    // Azure DevOps: /org/project/_git/repo
+    const gitIdx = parts.indexOf('_git');
+    if (gitIdx >= 2) return `${parts[gitIdx - 2]}/${parts[gitIdx - 1]}`;
+    return parts.slice(0, 2).join('/');
+  } catch {
+    return r;
+  }
+}
+
 export function getReviewRepos(): string[] {
   return getConfig().repos || [];
 }
@@ -93,4 +112,8 @@ export function getAiPlatform(): 'copilot-cli' | 'claude-code' {
 
 export function getDefaults(): PilotDefaults {
   return getConfig().defaults || {};
+}
+
+export function getPlatform(): 'github' | 'gitlab' | 'azdevops' {
+  return getConfig().platform || 'github';
 }

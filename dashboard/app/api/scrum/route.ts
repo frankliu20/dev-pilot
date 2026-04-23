@@ -1,5 +1,5 @@
 // GET   /api/scrum — generate scrum report (Done / Ongoing / Blocker) since last scrum mark
-// POST  /api/scrum — post status updates as comments to GitHub issues
+// POST  /api/scrum — post status updates as comments to issues
 // PATCH /api/scrum — update the "last scrum" timestamp mark
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,7 +14,8 @@ import {
   classifyPRAction,
 } from '@/lib/github';
 import { getWorkspace } from '@/lib/config';
-import { REPO } from '@/lib/types';
+import { REPO, REPO_URL } from '@/lib/types';
+import { issueCommentArgs, getCliBinary } from '@/lib/git-provider';
 
 const execAsync = promisify(exec);
 
@@ -108,7 +109,7 @@ export async function GET() {
         : 'waiting review';
 
     const issueMatch = pr.title.match(/#(\d+)/);
-    const prUrl = pr.url || `https://github.com/${REPO}/pull/${pr.number}`;
+    const prUrl = pr.url || `${REPO_URL}/pull/${pr.number}`;
     items.push({
       number: pr.number,
       title: pr.title,
@@ -127,7 +128,7 @@ export async function GET() {
   for (const pr of openPRsRaw) {
     const m = pr.title.match(/#(\d+)/);
     if (m) {
-      issueToPR.set(parseInt(m[1]), { number: pr.number, url: pr.url || `https://github.com/${REPO}/pull/${pr.number}` });
+      issueToPR.set(parseInt(m[1]), { number: pr.number, url: pr.url || `${REPO_URL}/pull/${pr.number}` });
     }
   }
   for (const pr of mergedPRs) {
@@ -153,7 +154,7 @@ export async function GET() {
     items.push({
       number: issue.number,
       title: issue.title,
-      url: issue.url || `https://github.com/${REPO}/issues/${issue.number}`,
+      url: issue.url || `${REPO_URL}/issues/${issue.number}`,
       status: isBlocked ? 'blocker' : 'ongoing',
       summary: isBlocked ? 'Blocked — see issue labels' : 'In progress, no PR yet',
       kind: 'issue',
@@ -193,8 +194,10 @@ export async function POST(request: NextRequest) {
   for (const update of updates) {
     try {
       const targetRepo = update.repo || REPO;
+      const cli = getCliBinary();
+      const args = issueCommentArgs(targetRepo, update.issueNumber, update.comment);
       await execAsync(
-        `gh issue comment ${update.issueNumber} --repo ${targetRepo} --body "${update.comment.replace(/"/g, '\\"')}"`,
+        `${cli} ${args}`,
         { timeout: 15000 },
       );
       results.push({ number: update.issueNumber, success: true });

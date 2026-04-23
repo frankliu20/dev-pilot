@@ -8,6 +8,7 @@ vi.mock('@/lib/terminal', () => ({
 vi.mock('@/lib/types', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/types')>()),
   REPO: 'owner/repo',
+  REPO_URL: 'https://github.com/owner/repo',
 }));
 
 import { POST } from '@/app/api/tasks/review-pr/route';
@@ -52,6 +53,19 @@ describe('POST /api/tasks/review-pr', () => {
     expect(body.message).toContain('#456');
   });
 
+  it('returns 200 with Azure DevOps pullrequest URL', async () => {
+    vi.mocked(openClaudeTerminal).mockReturnValue({ success: true });
+
+    const res = await POST(createRequest({
+      prUrl: 'https://dev.azure.com/org/project/_git/repo/pullrequest/42',
+    }));
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.message).toContain('#42');
+  });
+
   it('returns 400 for invalid prUrl format', async () => {
     const res = await POST(createRequest({
       prUrl: 'https://not-github.com/foo/bar',
@@ -59,7 +73,7 @@ describe('POST /api/tasks/review-pr', () => {
     expect(res.status).toBe(400);
 
     const body = await res.json();
-    expect(body.error).toContain('Invalid PR URL');
+    expect(body.error).toContain('Invalid PR/MR URL');
   });
 
   it('returns 400 when both prNumber and prUrl are missing', async () => {

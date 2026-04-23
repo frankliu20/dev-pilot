@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { openClaudeTerminal } from '@/lib/terminal';
-import { REPO, CliTool } from '@/lib/types';
+import { REPO, REPO_URL, CliTool } from '@/lib/types';
 
 type FixMode = 'normal' | 'auto';
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing prNumber' }, { status: 400 });
   }
 
-  const prUrl = `https://github.com/${REPO}/pull/${prNumber}`;
+  const prUrl = `${REPO_URL}/pull/${prNumber}`;
   const autoFlag = mode === 'auto' ? ' --auto' : '';
   const customPrompt = `/pilot-dev-issue${autoFlag} check open comments on ${prUrl} and fix them`;
 

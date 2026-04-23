@@ -9,15 +9,19 @@ import {
   fetchMyOpenPRs,
   classifyPRAction,
 } from '@/lib/github';
-import { REPO } from '@/lib/types';
+import { REPO, REPO_URL } from '@/lib/types';
+import { repoUrl as buildRepoUrl } from '@/lib/git-provider';
 
-/** Build a GitHub URL for a PR/issue, using the repo field if available */
-function prUrl(pr: { number: number; repo?: string }): string {
-  return `https://github.com/${pr.repo || REPO}/pull/${pr.number}`;
+/** Build a URL for a PR/issue, using the repo field if available */
+function prUrl(pr: { number: number; url?: string; repo?: string }): string {
+  if (pr.url) return pr.url;
+  const base = pr.repo ? buildRepoUrl(pr.repo) : REPO_URL;
+  return `${base}/pull/${pr.number}`;
 }
 function issueUrl(issue: { number: number; url?: string; repo?: string }): string {
   if (issue.url) return issue.url;
-  return `https://github.com/${issue.repo || REPO}/issues/${issue.number}`;
+  const base = issue.repo ? buildRepoUrl(issue.repo) : REPO_URL;
+  return `${base}/issues/${issue.number}`;
 }
 
 export async function GET() {

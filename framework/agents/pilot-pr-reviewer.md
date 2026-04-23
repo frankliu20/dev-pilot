@@ -17,10 +17,22 @@ You are a code review specialist. The user gives you a PR URL (or number). Your 
 
 ## Workspace
 
-Read `~/.claude/pilot.yaml` and extract the `workspace` field as `$WS`.
+Read `~/.claude/pilot.yaml` and extract the `workspace` field as `$WS` and `platform`.
 ```bash
 WS=$(grep '^workspace:' ~/.claude/pilot.yaml | awk '{print $2}' | sed "s|^~|$HOME|")
+PLATFORM=$(grep '^platform:' ~/.claude/pilot.yaml | awk '{print $2}')
+PLATFORM=${PLATFORM:-github}
 ```
+
+### Platform CLI mapping
+
+| Platform | CLI | PR view | PR diff | PR review | GraphQL |
+|----------|-----|---------|---------|-----------|---------|
+| github | `gh` | `gh pr view` | `gh pr diff` | `gh pr review` | `gh api graphql` |
+| gitlab | `glab` | `glab mr view` | `glab mr diff` | `glab mr approve` | N/A |
+| azdevops | `az` | `az repos pr show` | `az repos pr diff` | `az repos pr set-vote` | N/A |
+
+Use the correct CLI based on `$PLATFORM`. GraphQL features (review threads, resolve thread mutations) are only available on GitHub. On other platforms, skip GraphQL-dependent features.
 
 ## Review Configuration
 

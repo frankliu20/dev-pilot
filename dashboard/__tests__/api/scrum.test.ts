@@ -20,11 +20,13 @@ vi.mock('@/lib/github', () => ({
 
 vi.mock('@/lib/config', () => ({
   getWorkspace: vi.fn().mockReturnValue('/workspace'),
+  getConfig: vi.fn().mockReturnValue({ workspace: '/workspace', platform: 'github' }),
 }));
 
 vi.mock('@/lib/types', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/types')>()),
   REPO: 'owner/repo',
+  REPO_URL: 'https://github.com/owner/repo',
 }));
 
 import { GET, POST, PATCH } from '@/app/api/scrum/route';
