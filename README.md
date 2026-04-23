@@ -20,6 +20,34 @@ Traditional AI coding tools only generate fragmented code snippets. Dev Pilot ru
 
 It understands your project context, handles full-process engineering trivialities, and only leaves core architecture & decision work to humans.
 
+## Dashboard
+
+The Dev Pilot Dashboard provides a visual command center for managing your AI engineering workflow.
+
+### Issues Overview
+
+Track open issues assigned to you, view status, and assign them to AI agents with one click.
+
+![Issues Overview](docs/images/dashboard-page-1.png)
+
+### Claude Code Tasks
+
+Monitor active AI agent tasks in real-time — see progress bars, current phase, and elapsed time.
+
+![Claude Code Tasks](docs/images/dashboard-page-2.png)
+
+### Pull Requests
+
+Manage open PRs authored by your AI team — review status, merge targets, and trigger reviews.
+
+![Pull Requests](docs/images/dashboard-page-3.png)
+
+### Daily Report
+
+Get an end-of-day summary: issues closed, PRs merged, and a timeline of completed work.
+
+![Daily Report](docs/images/dashboard-page-4.png)
+
 ## Quick Start
 
 ```bash
