@@ -52,3 +52,8 @@ defaults:
 # (e.g., cross-repo builds, manual verification scenarios).
 # If omitted, /pilot-dev-issue uses inline build/test with auto-detection.
 # test_runner_skill: my-custom-test-runner
+
+# PR monitoring settings (used by /pilot-watch-pr)
+# watch_pr:
+#   auto_fix_ci: true            # default: true — auto-fix CI failures
+#   auto_fix_comments: false     # default: false — auto-fix review comments

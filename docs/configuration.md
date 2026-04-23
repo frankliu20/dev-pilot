@@ -46,6 +46,8 @@ defaults:
 | `build.test_command` | string | auto-detect | Override test command. `{{file}}` is replaced with the test file path |
 | `build.default_branch` | string | `main` | Default branch for git operations |
 | `test_runner_skill` | string | — | Name of a custom test runner skill in `~/.claude/skills/` (advanced — for complex test workflows) |
+| `watch_pr.auto_fix_ci` | bool | `true` | Auto-fix CI failures detected by `/pilot-watch-pr` |
+| `watch_pr.auto_fix_comments` | bool | `false` | Auto-fix review comments detected by `/pilot-watch-pr` |
 
 ### Preset Configs
 
