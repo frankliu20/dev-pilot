@@ -48,15 +48,46 @@ git commit -m "<type>(<scope>): <description>
 Fixes #<issue-number>"
 ```
 
-### Step 3: Push and Create PR
+### Step 3: Check for PR Template
+
+Before creating the PR, check if the project has a PR template:
+
+```bash
+# Check for PR template in the repo root
+PR_TEMPLATE=""
+for tmpl in .github/PULL_REQUEST_TEMPLATE.md .github/pull_request_template.md docs/pull_request_template.md PULL_REQUEST_TEMPLATE.md; do
+  if [ -f "$tmpl" ]; then
+    PR_TEMPLATE="$tmpl"
+    break
+  fi
+done
+echo "PR_TEMPLATE=${PR_TEMPLATE:-none}"
+```
+
+**If a PR template is found:**
+1. Read the template file
+2. Use it as the structure for the PR body — fill in each section based on the changes made
+3. Preserve all headings, checklists, and formatting from the template
+4. Replace placeholder text with actual content relevant to this PR
+5. Keep any checklist items (e.g., `- [ ] Tests added`) and check them off (`- [x]`) where applicable
+
+**If no PR template is found:**
+Use the default format shown in Step 4 below.
+
+### Step 4: Push and Create PR
 ```bash
 # Push to remote
 git push -u origin <branch-name>
 
-# Create PR
+# Create PR — use template-based body if PR_TEMPLATE was found, otherwise use default format
 gh pr create \
   --title "<concise title>" \
-  --body "## Summary
+  --body "<PR body: filled-in template OR default format below>"
+```
+
+**Default PR body format** (used only when no PR template exists):
+```
+## Summary
 <what this PR does and why>
 
 ## Changes
@@ -65,7 +96,7 @@ gh pr create \
 ## Test Plan
 - <how to verify>
 
-Fixes #<issue-number>"
+Fixes #<issue-number>
 ```
 
 ## Output Format
