@@ -102,14 +102,14 @@ export function repoSlugFromUrl(url: string): string {
 
 export function issueListArgs(repo: string, extra: string = ''): string {
   const p = getPlatform();
+  const suffix = extra ? ` ${extra}` : '';
   switch (p) {
     case 'github':
-      return `issue list --repo ${repo} ${extra}`;
+      return `issue list --repo ${repo}${suffix}`;
     case 'gitlab':
-      return `issue list --repo ${repo} ${extra}`;
+      return `issue list --repo ${repo}${suffix}`;
     case 'azdevops':
-      // az boards work-item list requires --org and --project, handled by caller
-      return `boards work-item list ${extra}`;
+      return `boards work-item list${suffix}`;
   }
 }
 
@@ -143,25 +143,27 @@ export function issueCommentArgs(repo: string, number: number, body: string): st
 
 export function prListArgs(repo: string, extra: string = ''): string {
   const p = getPlatform();
+  const suffix = extra ? ` ${extra}` : '';
   switch (p) {
     case 'github':
-      return `pr list --repo ${repo} ${extra}`;
+      return `pr list --repo ${repo}${suffix}`;
     case 'gitlab':
-      return `mr list --repo ${repo} ${extra}`;
+      return `mr list --repo ${repo}${suffix}`;
     case 'azdevops':
-      return `repos pr list --repository ${repo} ${extra}`;
+      return `repos pr list --repository ${repo}${suffix}`;
   }
 }
 
 export function prViewArgs(repo: string, number: number, extra: string = ''): string {
   const p = getPlatform();
+  const suffix = extra ? ` ${extra}` : '';
   switch (p) {
     case 'github':
-      return `pr view ${number} --repo ${repo} ${extra}`;
+      return `pr view ${number} --repo ${repo}${suffix}`;
     case 'gitlab':
-      return `mr view ${number} --repo ${repo} ${extra}`;
+      return `mr view ${number} --repo ${repo}${suffix}`;
     case 'azdevops':
-      return `repos pr show --id ${number} ${extra}`;
+      return `repos pr show --id ${number}${suffix}`;
   }
 }
 
@@ -181,13 +183,14 @@ export function prCreateArgs(repo: string, title: string, body: string, extra: s
   const p = getPlatform();
   const escapedTitle = shellEscape(title);
   const escapedBody = shellEscape(body);
+  const suffix = extra ? ` ${extra}` : '';
   switch (p) {
     case 'github':
-      return `pr create --repo ${repo} --title ${escapedTitle} --body ${escapedBody} ${extra}`;
+      return `pr create --repo ${repo} --title ${escapedTitle} --body ${escapedBody}${suffix}`;
     case 'gitlab':
-      return `mr create --repo ${repo} --title ${escapedTitle} --description ${escapedBody} ${extra}`;
+      return `mr create --repo ${repo} --title ${escapedTitle} --description ${escapedBody}${suffix}`;
     case 'azdevops':
-      return `repos pr create --repository ${repo} --title ${escapedTitle} --description ${escapedBody} ${extra}`;
+      return `repos pr create --repository ${repo} --title ${escapedTitle} --description ${escapedBody}${suffix}`;
   }
 }
 

@@ -189,12 +189,12 @@ describe('issueListArgs', () => {
 
   it('builds gitlab args', () => {
     setMockPlatform('gitlab');
-    expect(issueListArgs('team/project')).toBe('issue list --repo team/project ');
+    expect(issueListArgs('team/project')).toBe('issue list --repo team/project');
   });
 
   it('builds azdevops args', () => {
     setMockPlatform('azdevops');
-    expect(issueListArgs('org/project')).toBe('boards work-item list ');
+    expect(issueListArgs('org/project')).toBe('boards work-item list');
   });
 });
 
@@ -252,24 +252,24 @@ describe('prListArgs', () => {
 
   it('builds gitlab mr list args', () => {
     setMockPlatform('gitlab');
-    expect(prListArgs('team/project')).toBe('mr list --repo team/project ');
+    expect(prListArgs('team/project')).toBe('mr list --repo team/project');
   });
 
   it('builds azdevops args', () => {
     setMockPlatform('azdevops');
-    expect(prListArgs('org/project')).toBe('repos pr list --repository org/project ');
+    expect(prListArgs('org/project')).toBe('repos pr list --repository org/project');
   });
 });
 
 describe('prViewArgs', () => {
   it('builds github args', () => {
     setMockPlatform('github');
-    expect(prViewArgs('owner/repo', 5)).toBe('pr view 5 --repo owner/repo ');
+    expect(prViewArgs('owner/repo', 5)).toBe('pr view 5 --repo owner/repo');
   });
 
   it('builds gitlab args', () => {
     setMockPlatform('gitlab');
-    expect(prViewArgs('team/project', 5)).toBe('mr view 5 --repo team/project ');
+    expect(prViewArgs('team/project', 5)).toBe('mr view 5 --repo team/project');
   });
 });
 

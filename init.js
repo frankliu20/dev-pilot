@@ -396,8 +396,14 @@ async function main() {
           ? 'y'  // Non-interactive: auto-clone
           : await askQuestion(`  Clone ${repo}? (Y/n): `);
         if (clone.toLowerCase() !== 'n') {
-          // Repos are stored as full URLs; ensure .git suffix for cloning
-          const gitUrl = repo.endsWith('.git') ? repo : `${repo}.git`;
+          // Repos are stored as full URLs; bare slugs fall back to GitHub for backward compat
+          let gitUrl = repo;
+          if (!gitUrl.startsWith('http://') && !gitUrl.startsWith('https://')) {
+            gitUrl = `https://github.com/${gitUrl}`;
+          }
+          if (!gitUrl.endsWith('.git')) {
+            gitUrl = `${gitUrl}.git`;
+          }
           console.log(`  [CLONE]  ${gitUrl}`);
           try {
             execSync(`git clone ${gitUrl}`, { cwd: workspace, stdio: 'inherit' });
