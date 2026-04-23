@@ -215,7 +215,7 @@ async function main() {
     config = {};
 
     // Workspace
-    const defaultWs = path.join(os.homedir(), 'claude', 'workspace');
+    const defaultWs = path.join(os.homedir(), 'claude', 'workdir');
     if (workspaceArg) {
       config.workspace = path.resolve(workspaceArg);
     } else {
