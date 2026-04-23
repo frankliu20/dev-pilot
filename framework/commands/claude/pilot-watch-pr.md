@@ -83,12 +83,66 @@ If nothing changed:
 PR Monitor — <time> — no changes
 ```
 
-### Step 4: Report (one line per PR, only if changes detected)
+### Step 4: Report and notify Dashboard
 
+When a condition is detected and it's **NEW** (changed since last cycle):
+
+#### Terminal output (one line per PR):
 ```
 PR Monitor — <time>
 💬 #5124 Disable fail-fast — 3 unresolved comments
 ✅ #5098 PostToolUse hook — approved & CI green, ready to merge!
+```
+
+#### Dashboard notification file:
+
+For **unresolved comments**:
+```bash
+mkdir -p "$WS/logs/pending-decisions"
+cat > "$WS/logs/pending-decisions/pr-<N>.json" << 'NOTIFICATION'
+{
+  "taskId": "pr-<N>",
+  "issueNumber": null,
+  "prNumber": <N>,
+  "phase": "pr_notification",
+  "question": "PR #<N> has <count> unresolved review comments",
+  "options": ["Fix Comments", "Review", "Dismiss"],
+  "context": "<reviewer names and first line of each unresolved comment>",
+  "timestamp": "<ISO8601>"
+}
+NOTIFICATION
+```
+
+For **ready to merge**:
+```bash
+cat > "$WS/logs/pending-decisions/pr-<N>.json" << 'NOTIFICATION'
+{
+  "taskId": "pr-<N>",
+  "issueNumber": null,
+  "prNumber": <N>,
+  "phase": "pr_notification",
+  "question": "PR #<N> is approved and CI green — ready to merge!",
+  "options": ["Merge", "Review", "Dismiss"],
+  "context": "<PR title, approver names>",
+  "timestamp": "<ISO8601>"
+}
+NOTIFICATION
+```
+
+#### Status log:
+```bash
+echo '{"timestamp":"<ISO8601>","task_id":"pr-<N>","type":"<event>","phase":"pr_monitor","pr_number":<N>,"detail":"<message>"}' >> "$WS/logs/pr-<N>.jsonl"
+```
+Event types: `review_comments`, `ready_to_merge`, `pr_merged`
+
+#### Cleanup:
+- PR merged/closed → delete notification: `rm -f "$WS/logs/pending-decisions/pr-<N>.json"`
+- Unresolved comments drop to 0 → delete notification
+- Same PR already has notification → overwrite with latest state
+
+If nothing changed:
+```
+PR Monitor — <time> — no changes
 ```
 
 If no open PRs:
