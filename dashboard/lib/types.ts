@@ -93,9 +93,6 @@ export type PRAction =
   | 'draft'
   | 'waiting';
 
-// Test scenario for manual verification: 'vscode' (3a), 'intellij' (3b), 'mcp-server' (3c)
-export type TestScenario = 'vscode' | 'intellij' | 'mcp-server';
-
 // ── CLI Tool configuration ────────────────────────────────────────────
 
 export type CliTool = 'claude' | 'copilot';

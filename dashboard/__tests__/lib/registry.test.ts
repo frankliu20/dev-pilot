@@ -37,11 +37,10 @@ describe('TaskRegistry', () => {
     });
 
     it('calls openClaudeTerminal with correct options', () => {
-      registry.assign('issue-42', 'https://github.com/o/r/issues/42', 'auto', false, 'vscode', 'copilot');
+      registry.assign('issue-42', 'https://github.com/o/r/issues/42', 'auto', false, 'copilot');
       expect(openClaudeTerminal).toHaveBeenCalledWith({
         issueUrl: 'https://github.com/o/r/issues/42',
         mode: 'auto',
-        testScenario: 'vscode',
         cliTool: 'copilot',
       });
     });

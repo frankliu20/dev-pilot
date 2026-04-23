@@ -3,7 +3,7 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
 
-import { TestScenario, CliTool, CLI_TOOL_CONFIG } from './types';
+import { CliTool, CLI_TOOL_CONFIG } from './types';
 import { getRepo, getWorkspace } from './config';
 
 /** Get local repo path. If a GitHub URL is provided, extract the repo name from it. */
@@ -28,7 +28,6 @@ export interface TerminalResult {
 export interface TerminalOptions {
   issueUrl?: string;
   mode?: 'normal' | 'auto';
-  testScenario?: TestScenario;  // Test scenario: vscode (3a) or intellij (3b) or mcp-server (3c)
   customPrompt?: string;        // Full prompt to pass to cli tool (overrides issueUrl/mode)
   tabTitle?: string;             // Terminal tab title
   cliTool?: CliTool;             // CLI tool to use (default: 'claude')
@@ -55,8 +54,7 @@ export function openClaudeTerminal(issueUrlOrOpts: string | TerminalOptions, mod
       prompt = opts.customPrompt;
     } else if (opts.issueUrl) {
       const autoFlag = (opts.mode || 'normal') === 'auto' ? ' --auto' : '';
-      const scenarioFlag = opts.testScenario ? ` --test-scenario ${opts.testScenario}` : '';
-      prompt = `/pilot-dev-issue${autoFlag}${scenarioFlag} ${opts.issueUrl}`;
+      prompt = `/pilot-dev-issue${autoFlag} ${opts.issueUrl}`;
     } else {
       return { success: false, error: 'No issueUrl or customPrompt provided' };
     }

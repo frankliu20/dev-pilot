@@ -90,19 +90,6 @@ describe('openClaudeTerminal — TerminalOptions argument', () => {
     expect(cmdArg).toBeDefined();
   });
 
-  it('includes --test-scenario flag when testScenario provided', () => {
-    Object.defineProperty(process, 'platform', { value: 'win32' });
-    openClaudeTerminal({
-      issueUrl: 'https://github.com/owner/repo/issues/42',
-      testScenario: 'vscode',
-    });
-
-    const call = vi.mocked(spawn).mock.calls[0];
-    const args = call[1] as string[];
-    const cmdArg = args.find(a => a.includes('--test-scenario vscode'));
-    expect(cmdArg).toBeDefined();
-  });
-
   it('uses copilot CLI config when cliTool is copilot', () => {
     Object.defineProperty(process, 'platform', { value: 'win32' });
     openClaudeTerminal({

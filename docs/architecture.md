@@ -7,7 +7,6 @@ dev-pilot/
 ├── init.js                         # Installer — reads pilot.yaml, copies framework + skills
 ├── clean.js                        # Workspace cleanup (logs, worktrees, repo reset)
 ├── pilot.yaml.template             # Config template for new users
-├── modernize-java-pilot.yaml       # Preset config for the modernize-java project
 ├── LICENSE
 │
 ├── framework/                      # Generic — installed to ~/.claude/
@@ -15,14 +14,8 @@ dev-pilot/
 │   ├── agents/                     # pilot-code-explorer, pilot-pr-creator, pilot-pr-reviewer
 │   └── templates/                  # CLAUDE.md template
 │
-├── skills/                         # Project-specific skill packs
-│   └── modernize-java/             # Azure Java Migration Copilot skills
-│       ├── test-runner/            # Build, test, manual verify strategies
-│       ├── build-intellij/         # Cross-repo IntelliJ plugin build
-│       ├── telemetry-query/        # Azure App Insights queries
-│       ├── benchmark-analysis/     # MSBenchmark run analysis
-│       ├── general-knowledge/      # Project gotchas and patterns
-│       └── scripts/                # Utility scripts
+├── skills/                         # Custom skills (optional, user-managed)
+│   └── <your-skill>/              # Custom skills (optional, user-managed)
 │
 ├── dashboard/                      # Next.js web dashboard
 │   ├── app/                        # Pages, components, API routes, hooks
@@ -32,7 +25,6 @@ dev-pilot/
 └── docs/                           # Documentation
     ├── configuration.md
     ├── architecture.md             # ← You are here
-    ├── creating-skill-packs.md
     ├── dev-guide.md
     └── task-status-and-notifications.md
 ```
@@ -58,9 +50,9 @@ Installed to `~/.claude/` by `node init.js`. Contains the reusable automation la
 | `pilot-pr-creator` | `agents/pilot-pr-creator.md` | Read + Write + Bash | Git & GitHub automation — staging, committing, pushing, PR creation |
 | `pilot-pr-reviewer` | `agents/pilot-pr-reviewer.md` | Read + Bash | Structured code review with interactive discussion |
 
-### Skill Packs (`skills/`)
+### Custom Skills (`~/.claude/skills/`)
 
-Project-specific knowledge and tools. See [Creating Skill Packs](creating-skill-packs.md).
+Custom skills can be placed in `~/.claude/skills/` for project-specific workflows. See [Configuration Guide](configuration.md) for the `test_runner_skill` option.
 
 ### Dashboard (`dashboard/`)
 

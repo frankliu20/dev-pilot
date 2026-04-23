@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { GHIssue, ClaudeTask, TestScenario, REPO_URL } from '@/lib/types';
+import { GHIssue, ClaudeTask, REPO_URL } from '@/lib/types';
 import { PHASE_CONFIG, ACTIVE_PHASES } from '@/lib/constants';
 import { timeAgo, formatTime } from '@/lib/utils';
 import Icon from './ui/Icon';
@@ -22,14 +22,11 @@ interface Props {
   loading?: boolean;
   tasks: ClaudeTask[];
   onClose: () => void;
-  onAssign: (issue: GHIssue, mode: FixMode, force?: boolean, testScenario?: TestScenario) => void;
-  skills?: string[];
+  onAssign: (issue: GHIssue, mode: FixMode, force?: boolean) => void;
 }
 
-export default function IssuePanel({ issue, loading, tasks, onClose, onAssign, skills = [] }: Props) {
-  const hasModJava = skills.includes('modernize-java');
+export default function IssuePanel({ issue, loading, tasks, onClose, onAssign }: Props) {
   const [mode, setMode] = useState<FixMode>('normal');
-  const [scenario, setScenario] = useState<TestScenario>('vscode');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -143,27 +140,16 @@ export default function IssuePanel({ issue, loading, tasks, onClose, onAssign, s
             <option value="normal">Normal</option>
             <option value="auto">Auto</option>
           </Select>
-          {hasModJava && (
-            <Select
-              value={scenario}
-              onChange={e => setScenario(e.target.value as TestScenario)}
-              disabled={isActive}
-            >
-              <option value="vscode">VS Code</option>
-              <option value="intellij">IntelliJ</option>
-              <option value="mcp-server">MCP Server</option>
-            </Select>
-          )}
           {isActive ? (
-            <Button variant="warning" onClick={() => onAssign(issue, mode, true, hasModJava ? scenario : undefined)}>
+            <Button variant="warning" onClick={() => onAssign(issue, mode, true)}>
               Force Re-run
             </Button>
           ) : isDone ? (
-            <Button variant="warning" onClick={() => onAssign(issue, mode, true, hasModJava ? scenario : undefined)}>
+            <Button variant="warning" onClick={() => onAssign(issue, mode, true)}>
               Re-run
             </Button>
           ) : (
-            <Button variant="primary" onClick={() => onAssign(issue, mode, false, hasModJava ? scenario : undefined)}>
+            <Button variant="primary" onClick={() => onAssign(issue, mode, false)}>
               Assign to Claude
             </Button>
           )}

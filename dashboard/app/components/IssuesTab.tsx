@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { GHIssue, ClaudeTask, TaskPhase, TestScenario, REPO_URL } from '@/lib/types';
+import { GHIssue, ClaudeTask, TaskPhase, REPO_URL } from '@/lib/types';
 import { PHASE_CONFIG, ACTIVE_PHASES } from '@/lib/constants';
 import Icon from './ui/Icon';
 import Badge from './ui/Badge';
@@ -25,9 +25,8 @@ interface Props {
   tasks: ClaudeTask[];
   loading: boolean;
   onRefresh: () => void;
-  onAssign: (issue: GHIssue, mode: FixMode, force?: boolean, testScenario?: TestScenario) => void;
+  onAssign: (issue: GHIssue, mode: FixMode, force?: boolean) => void;
   onClean: (issue: GHIssue) => void;
-  skills?: string[];
 }
 
 const PHASE_ORDER: Record<TaskPhase, number> = {
@@ -37,10 +36,8 @@ const PHASE_ORDER: Record<TaskPhase, number> = {
   planned: 9, done: 10, failed: 11,
 };
 
-export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign, onClean, skills = [] }: Props) {
-  const hasModJava = skills.includes('modernize-java');
+export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign, onClean }: Props) {
   const [modes, setModes] = useState<Map<number, FixMode>>(new Map());
-  const [scenarios, setScenarios] = useState<Map<number, TestScenario>>(new Map());
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('number');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -51,8 +48,6 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
 
   const getMode = (n: number): FixMode => modes.get(n) || 'normal';
   const setMode = (n: number, m: FixMode) => setModes(prev => new Map(prev).set(n, m));
-  const getScenario = (n: number): TestScenario => scenarios.get(n) || 'vscode';
-  const setScenario = (n: number, s: TestScenario) => setScenarios(prev => new Map(prev).set(n, s));
 
   const taskByIssue = useMemo(() => {
     const map = new Map<number, ClaudeTask>();
@@ -228,7 +223,6 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
               <SortHeader sKey="title">Title</SortHeader>
               <SortHeader sKey="status">Status</SortHeader>
               <th className={styles.colMode}>Mode</th>
-              {hasModJava && <th className={styles.colTest}>Test</th>}
               <th className={styles.colAction}>Action</th>
             </tr>
           </thead>
@@ -305,28 +299,14 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
                         <option value="auto">Auto</option>
                       </Select>
                     </td>
-                    {hasModJava && (
-                      <td className={styles.colTest} onClick={e => e.stopPropagation()}>
-                        <Select
-                          size_="sm"
-                          value={getScenario(issue.number)}
-                          onChange={e => setScenario(issue.number, e.target.value as TestScenario)}
-                          disabled={isActive}
-                        >
-                          <option value="vscode">VS Code</option>
-                          <option value="intellij">IntelliJ</option>
-                          <option value="mcp-server">MCP Server</option>
-                        </Select>
-                      </td>
-                    )}
                     <td className={styles.colAction} onClick={e => e.stopPropagation()}>
                       <div className={styles.actionGroup}>
                         {isActive ? (
-                          <Button variant="warning" size="sm" onClick={() => onAssign(issue, getMode(issue.number), true, hasModJava ? getScenario(issue.number) : undefined)}>Force Re-run</Button>
+                          <Button variant="warning" size="sm" onClick={() => onAssign(issue, getMode(issue.number), true)}>Force Re-run</Button>
                         ) : isDone ? (
-                          <Button variant="warning" size="sm" onClick={() => onAssign(issue, getMode(issue.number), true, hasModJava ? getScenario(issue.number) : undefined)}>Re-run</Button>
+                          <Button variant="warning" size="sm" onClick={() => onAssign(issue, getMode(issue.number), true)}>Re-run</Button>
                         ) : (
-                          <Button variant="primary" size="sm" onClick={() => onAssign(issue, getMode(issue.number), false, hasModJava ? getScenario(issue.number) : undefined)}>Assign</Button>
+                          <Button variant="primary" size="sm" onClick={() => onAssign(issue, getMode(issue.number), false)}>Assign</Button>
                         )}
                         <Tooltip content="Clean log & worktree">
                           <button
@@ -341,7 +321,7 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
                   </tr>
                   {isExpanded && (
                     <tr className={styles.expandedRow}>
-                      <td colSpan={hasModJava ? 6 : 5}>
+                      <td colSpan={5}>
                         <div className={styles.issueBody}>
                           {isBodyLoading ? (
                             <Skeleton count={4} gap={10} />

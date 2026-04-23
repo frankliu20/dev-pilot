@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { GHIssue, GHPR, PRAction, TestScenario, REPO_URL, ReviewConfig, CliTool, CLI_TOOL_CONFIG } from '@/lib/types';
+import { GHIssue, GHPR, PRAction, REPO_URL, ReviewConfig, CliTool, CLI_TOOL_CONFIG } from '@/lib/types';
 import { useTaskStream, useGitHubData, useTheme, useKeyboardShortcuts } from './hooks';
 import { ACTIVE_PHASES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -16,13 +16,12 @@ import IssuesTab from './components/IssuesTab';
 import PullRequestsTab from './components/PullRequestsTab';
 import TasksTab from './components/TasksTab';
 import ActionsTab from './components/ActionsTab';
-import TroubleshootTab from './components/TroubleshootTab';
 import SkillsTab from './components/SkillsTab';
 import ReportTab from './components/ReportTab';
 import OffWorkCelebration from './components/OffWorkCelebration';
 import styles from './page.module.css';
 
-type Tab = 'issues' | 'prs' | 'tasks' | 'actions' | 'troubleshoot' | 'skills' | 'report';
+type Tab = 'issues' | 'prs' | 'tasks' | 'actions' | 'skills' | 'report';
 
 interface PRData {
   prs: (GHPR & { action: PRAction })[];
@@ -38,12 +37,11 @@ const TAB_CONFIG: { key: Tab; label: string | null; icon: string }[] = [
   { key: 'prs',          label: 'Pull Requests',  icon: 'git-pull-request' },
   { key: 'tasks',        label: null,              icon: 'cpu' },  // dynamic label
   { key: 'actions',      label: 'Actions',        icon: 'alert-circle' },
-  { key: 'troubleshoot', label: 'Troubleshoot',   icon: 'terminal' },
   { key: 'skills',       label: 'Skills',          icon: 'zap' },
   { key: 'report',       label: 'Report',          icon: 'bar-chart' },
 ];
 
-const VALID_TABS = new Set<Tab>(['issues', 'prs', 'tasks', 'actions', 'troubleshoot', 'skills', 'report']);
+const VALID_TABS = new Set<Tab>(['issues', 'prs', 'tasks', 'actions', 'skills', 'report']);
 
 function DashboardInner() {
   const searchParams = useSearchParams();
@@ -67,21 +65,12 @@ function DashboardInner() {
   const [cleaning, setCleaning] = useState(false);
   const [showOffWork, setShowOffWork] = useState(false);
   const [cliTool, setCliTool] = useState<CliTool>('claude');
-  const [skills, setSkills] = useState<string[]>([]);
 
   // Hydrate from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
     const stored = localStorage.getItem('cliTool') as CliTool | null;
     if (stored && stored !== cliTool) setCliTool(stored);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Fetch skill pack config on mount
-  useEffect(() => {
-    fetch('/api/config')
-      .then(res => res.json())
-      .then(data => setSkills(data.skills || []))
-      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -99,13 +88,13 @@ function DashboardInner() {
 
   const cliDisplayName = CLI_TOOL_CONFIG[cliTool].displayName;
 
-  const handleAssign = useCallback(async (issue: GHIssue, mode: 'normal' | 'auto' = 'normal', force: boolean = false, testScenario?: TestScenario) => {
+  const handleAssign = useCallback(async (issue: GHIssue, mode: 'normal' | 'auto' = 'normal', force: boolean = false) => {
     const issueUrl = `${REPO_URL}/issues/${issue.number}`;
     try {
       const res = await fetch('/api/tasks/assign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ issueUrl, mode, force, testScenario, cliTool }),
+        body: JSON.stringify({ issueUrl, mode, force, cliTool }),
       });
       const data = await res.json();
       if (res.status === 409) {
@@ -339,7 +328,6 @@ function DashboardInner() {
     [prData]
   );
 
-  const hasModJava = skills.includes('modernize-java');
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -347,9 +335,8 @@ function DashboardInner() {
     '2': () => setTab('prs'),
     '3': () => setTab('tasks'),
     '4': () => setTab('actions'),
-    '5': () => setTab('troubleshoot'),
-    '6': () => setTab('skills'),
-    '7': () => setTab('report'),
+    '5': () => setTab('skills'),
+    '6': () => setTab('report'),
     'r': handleRefresh,
     't': toggleTheme,
     'Escape': () => {
@@ -443,9 +430,7 @@ function DashboardInner() {
 
       {/* Tabs */}
       <nav className={styles.tabs}>
-        {TAB_CONFIG
-          .filter(t => t.key !== 'troubleshoot' || hasModJava)
-          .map(t => (
+        {TAB_CONFIG.map(t => (
           <button
             key={t.key}
             className={cn(styles.tab, tab === t.key && styles.active)}
@@ -484,7 +469,6 @@ function DashboardInner() {
             onRefresh={refreshIssues}
             onAssign={handleAssign}
             onClean={handleCleanIssue}
-            skills={skills}
           />
         )}
         {tab === 'prs' && (
@@ -508,9 +492,6 @@ function DashboardInner() {
             onFixComments={handleFixCommentsPR}
             onReview={handleReviewPRNumber}
           />
-        )}
-        {tab === 'troubleshoot' && (
-          <TroubleshootTab cliTool={cliTool} />
         )}
         {tab === 'skills' && (
           <SkillsTab cliTool={cliTool} />

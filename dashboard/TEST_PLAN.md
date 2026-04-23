@@ -680,15 +680,7 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-
 | **Run command** | Click "Run" → calls `/api/tasks/run-command` |
 | **Empty state** | "No skills installed" |
 
-### 7.8 `TroubleshootTab` (~5 cases)
-
-| Category | Test Cases |
-|---|---|
-| **Traces query** | Form inputs → calls `/api/traces` → shows results |
-| **Empty results** | "No traces found" message |
-| **Error state** | API failure → error message shown |
-
-### 7.9 `OffWorkCelebration` (~3 cases)
+### 7.8 `OffWorkCelebration` (~3 cases)
 
 | Category | Test Cases |
 |---|---|
@@ -866,7 +858,6 @@ dashboard/
 │   │   ├── ActionsTab.test.tsx
 │   │   ├── ReportTab.test.tsx
 │   │   ├── SkillsTab.test.tsx
-│   │   ├── TroubleshootTab.test.tsx
 │   │   └── OffWorkCelebration.test.tsx
 │   ├── integration/
 │   │   ├── statusLog-decisions.test.ts

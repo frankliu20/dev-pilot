@@ -6,7 +6,7 @@
 
 All source-of-truth files live in THIS repository (`dev-pilot/`). To update any command, agent, skill, or script:
 
-1. Edit the file in `dev-pilot/` (e.g., `framework/commands/pilot-dev-issue.md`, `framework/agents/pilot-pr-creator.md`, `skills/modernize-java/test-runner/SKILL.md`)
+1. Edit the file in `dev-pilot/` (e.g., `framework/commands/pilot-dev-issue.md`, `framework/agents/pilot-pr-creator.md`)
 2. Run `node init.js --force` to sync to `~/.claude/`
 3. Commit the change in this repo
 

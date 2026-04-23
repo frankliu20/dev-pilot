@@ -8,7 +8,7 @@
 
 ### Component Organization
 
-Components are organized into framework (generic) and skill packs (project-specific):
+Components are organized into framework (generic) and custom skills (project-specific, optional):
 
 ---
 
@@ -18,7 +18,7 @@ Components are organized into framework (generic) and skill packs (project-speci
 
 | Command | Purpose |
 |---------|---------|
-| `/pilot-dev-issue` | Core 7-phase orchestrator: issue → analyze → explore → plan → code → test → PR. Supports `--auto` and `--test-scenario` |
+| `/pilot-dev-issue` | Core 7-phase orchestrator: issue → analyze → explore → plan → code → test → PR. Supports `--auto` |
 | `/pilot-watch-pr` | PR monitoring daemon: 5-min polling, auto-fix CI failures, notify Dashboard on review comments / ready-to-merge, worktree cleanup |
 
 ##### Agents
@@ -29,17 +29,9 @@ Components are organized into framework (generic) and skill packs (project-speci
 | `pilot-pr-creator` | Git operations: stage, commit, push, create PR. Used by Phase 6 |
 | `pilot-pr-reviewer` | Structured code review (🔴/🟡/🟢), interactive discussion, fix review comments |
 
-#### Skill Packs — Project-specific, configurable
+#### Custom Skills — Optional, user-managed
 
-##### modernize-java (Azure Java Migration Copilot)
-
-| Skill | Purpose |
-|-------|---------|
-| `mod-java-test-runner` | Run tests (strategies 1/2/3a/3b/3c), auto-fix failures (max 3 rounds), generate manual test guide |
-| `mod-java-build-intellij` | Cross-repo: build MCP server tgz → install into IntelliJ plugin → Gradle build → hand off for manual test |
-| `mod-java-telemetry-query` | Query Azure Application Insights traces for telemetry verification after testing |
-| `mod-java-benchmark-analysis` | Analyze MSBenchmark run results |
-| `mod-java-general-knowledge` | Project knowledge: build commands, directory structure, patterns, gotchas, CI details |
+Custom skills can be added to `~/.claude/skills/` for project-specific test workflows. See [Configuration Guide](docs/configuration.md) for `test_runner_skill`.
 
 #### Infrastructure
 
@@ -59,7 +51,7 @@ Components are organized into framework (generic) and skill packs (project-speci
 1. **All config in `~/.claude/`** (user-level), not in repo — agents are personal tools, not project-specific
 2. **Source of truth in `dev-pilot/`** — commands, agents, skills live in this repo. Run `node init.js --force` to sync to `~/.claude/`
 3. **pilot.yaml as single config** — workspace path, repos, active skills, AI platform, automation defaults all in one file
-4. **Skills organized by project** — skill pack name (e.g., `modernize-java`) groups all project-specific skills under `skills/<pack>/`
+4. **Custom skills are optional** — users can add skills to `~/.claude/skills/` and reference them via `test_runner_skill` in `pilot.yaml`
 5. **Test strategy is user-chosen** per task — 1 (build only) / 2 (build + impacted tests) / 3 (build + tests + manual verify)
 6. **PR merge is manual** — agents never auto-merge, only notify
 7. **Issue/PR numbers rendered as full clickable URLs** in all output
@@ -112,11 +104,7 @@ Data:
 │   ├── pilot-dev-issue.md              # Core orchestrator
 │   └── pilot-watch-pr.md              # PR monitor daemon
 └── skills/
-    ├── mod-java-test-runner/SKILL.md   # Test execution & auto-fix
-    ├── mod-java-build-intellij/SKILL.md # Cross-repo IntelliJ build
-    ├── mod-java-telemetry-query/SKILL.md # Telemetry query
-    ├── mod-java-benchmark-analysis/SKILL.md # Benchmark analysis
-    └── mod-java-general-knowledge/SKILL.md  # Project knowledge
+    └── <your-skill>/SKILL.md       # Custom skills (optional)
 
 <workspace>/                           # Configured in pilot.yaml
 ├── <repo-name>/                       # Base repo clone
@@ -148,6 +136,6 @@ Data:
 - [ ] Auto-manage Claude terminal sessions (lifecycle, restart on crash)
 
 ### Team Sharing
-- [ ] Team sharing workflow for custom skill packs
+- [ ] Team sharing workflow for custom skills
 - [ ] Onboarding guide for teammates
 - [ ] Shared skill library with version control

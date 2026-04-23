@@ -3,7 +3,7 @@
 /**
  * Dev Pilot — Init Script
  *
- * Reads pilot.yaml config, then installs the framework (commands, skills, hooks)
+ * Reads pilot.yaml config, then installs the framework (commands, agents, hooks)
  * into ~/.claude/. Claude-native commands go to ~/.claude/commands/.
  * Copilot-specific commands (where they differ) go to ~/.copilot/commands/.
  *
@@ -164,10 +164,6 @@ function writeYaml(config) {
   for (const repo of (config.repos || [])) {
     yaml += `  - ${repo}\n`;
   }
-  yaml += '\nskills:\n';
-  for (const skill of (config.skills || [])) {
-    yaml += `  - ${skill}\n`;
-  }
   yaml += `\nchat_language: ${config.chat_language || 'English'}\n`;
   if (config.build) {
     yaml += '\nbuild:\n';
@@ -241,26 +237,6 @@ async function main() {
       }
     }
 
-    // Skills
-    const skillsDir = path.join(SRC_DIR, 'skills');
-    const availableSkills = fs.existsSync(skillsDir)
-      ? fs.readdirSync(skillsDir, { withFileTypes: true })
-          .filter(d => d.isDirectory())
-          .map(d => d.name)
-      : [];
-
-    if (availableSkills.length > 0) {
-      console.log(`  Available skill packs: ${availableSkills.join(', ')}`);
-      const answer = await askQuestion(`  Activate skills (comma-separated, or Enter for all): `);
-      if (answer) {
-        config.skills = answer.split(',').map(s => s.trim()).filter(Boolean);
-      } else {
-        config.skills = availableSkills;
-      }
-    } else {
-      config.skills = [];
-    }
-
     // Write pilot.yaml
     const yamlContent = writeYaml(config);
     fs.writeFileSync(PILOT_YAML, yamlContent, 'utf-8');
@@ -270,7 +246,6 @@ async function main() {
 
   console.log(`  Workspace:  ${config.workspace}`);
   console.log(`  Repos:      ${(config.repos || []).join(', ') || '(none)'}`);
-  console.log(`  Skills:     ${(config.skills || []).join(', ') || '(none)'}`);
   console.log('');
 
   // 3. Ensure workspace directory exists
@@ -331,74 +306,7 @@ async function main() {
   }
   console.log('');
 
-  // 6. Install activated skill packs
-  console.log('Skills:');
-  const skills = config.skills || [];
-  const skillsSrcBase = path.join(SRC_DIR, 'skills');
-  const skillsDest = path.join(CLAUDE_DIR, 'skills');
-  const scriptsDest = path.join(CLAUDE_DIR, 'scripts');
-
-  if (skills.length === 0) {
-    console.log('  (no skill packs activated)');
-  } else {
-    for (const skillPack of skills) {
-      const packSrc = path.join(skillsSrcBase, skillPack);
-      if (!fs.existsSync(packSrc)) {
-        console.log(`  [WARN]   Skill pack not found: ${skillPack}`);
-        continue;
-      }
-
-      console.log(`  Skill pack: ${skillPack}`);
-
-      // Copy skill directories (each subdir with SKILL.md)
-      const entries = fs.readdirSync(packSrc, { withFileTypes: true });
-      for (const entry of entries) {
-        if (!entry.isDirectory()) continue;
-        const subSrc = path.join(packSrc, entry.name);
-
-        if (entry.name === 'scripts') {
-          // Copy scripts to ~/.claude/scripts/
-          ensureDir(scriptsDest);
-          copyDir(subSrc, scriptsDest);
-        } else if (entry.name === 'test-scenarios') {
-          // Skip — test scenarios are now handled by the test-runner skill directly
-          continue;
-        } else {
-          // Regular skill — copy to ~/.claude/skills/<name>/
-          copyDir(subSrc, path.join(skillsDest, entry.name));
-        }
-      }
-    }
-  }
-  console.log('');
-
-  // 6b. Install personal skills (local-only, not in git)
-  console.log('Personal skills:');
-  const personalSkillsDir = path.join(SRC_DIR, 'personal-skills');
-  if (fs.existsSync(personalSkillsDir)) {
-    const personalEntries = fs.readdirSync(personalSkillsDir, { withFileTypes: true });
-    let personalCount = 0;
-    for (const entry of personalEntries) {
-      if (!entry.isDirectory()) continue;
-      const subSrc = path.join(personalSkillsDir, entry.name);
-
-      if (entry.name === 'scripts') {
-        ensureDir(scriptsDest);
-        copyDir(subSrc, scriptsDest);
-      } else {
-        copyDir(subSrc, path.join(skillsDest, entry.name));
-      }
-      personalCount++;
-    }
-    if (personalCount === 0) {
-      console.log('  (no personal skills found)');
-    }
-  } else {
-    console.log('  (personal-skills/ not found, skipping)');
-  }
-  console.log('');
-
-  // 7. CLAUDE.md template (never overwrite)
+  // 6. CLAUDE.md template (never overwrite)
   console.log('CLAUDE.md:');
   const claudeMdSrc = path.join(SRC_DIR, 'framework', 'templates', 'claude-md-template.md');
   const claudeMdDest = path.join(CLAUDE_DIR, 'CLAUDE.md');
@@ -420,7 +328,7 @@ async function main() {
   }
   console.log('');
 
-  // 8. Install git hooks into this repo
+  // 7. Install git hooks into this repo
   console.log('Git hooks:');
   const hooksSrc = path.join(SRC_DIR, 'framework', 'hooks');
   const selfGitHooks = path.join(SRC_DIR, '.git', 'hooks');
@@ -444,7 +352,7 @@ async function main() {
   }
   console.log('');
 
-  // 9. Clone repos (optional)
+  // 8. Clone repos (optional)
   if (config.repos && config.repos.length > 0) {
     console.log('Repos:');
     for (const repo of config.repos) {

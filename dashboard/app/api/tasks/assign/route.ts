@@ -6,11 +6,10 @@ import { CliTool } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { issueUrl, mode, force, testScenario, cliTool = 'claude' } = body as {
+  const { issueUrl, mode, force, cliTool = 'claude' } = body as {
     issueUrl: string;
     mode?: 'normal' | 'auto';
     force?: boolean;
-    testScenario?: 'vscode' | 'intellij' | 'mcp-server';
     cliTool?: CliTool;
   };
 
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
   const taskId = `issue-${issueNumber}`;
   const fixMode = mode || 'normal';
   console.log(`[tasks/assign] Assigning issue #${issueNumber} (mode=${fixMode}, tool=${cliTool})`);
-  const { result, entry, error } = registry.assign(taskId, issueUrl, fixMode, force, testScenario, cliTool);
+  const { result, entry, error } = registry.assign(taskId, issueUrl, fixMode, force, cliTool);
 
   if (result === 'already_running') {
     console.log(`[tasks/assign] Issue #${issueNumber} already running`);
