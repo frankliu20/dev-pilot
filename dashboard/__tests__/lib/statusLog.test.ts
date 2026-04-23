@@ -256,6 +256,7 @@ describe('deriveTasks', () => {
 
 describe('watchStatusLog', () => {
   it('calls callback when a .jsonl file changes', () => {
+    vi.useFakeTimers();
     const callback = vi.fn();
     const mockWatcher = { close: vi.fn() };
     vi.mocked(fs.watch).mockImplementation((_dir: any, listener: any) => {
@@ -265,10 +266,12 @@ describe('watchStatusLog', () => {
     });
 
     const unwatch = watchStatusLog(callback);
+    vi.advanceTimersByTime(300);
     expect(callback).toHaveBeenCalledOnce();
 
     unwatch();
     expect(mockWatcher.close).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
   it('does not call callback for non-.jsonl files', () => {

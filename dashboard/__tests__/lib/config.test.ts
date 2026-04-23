@@ -44,7 +44,7 @@ describe('config', () => {
       const { getConfig } = await importConfig();
       const config = getConfig();
 
-      expect(config.workspace).toBe(join('/home/testuser', 'claude', 'workspace'));
+      expect(config.workspace).toBe(join('/home/testuser', 'claude', 'workdir'));
       expect(config.repos).toEqual([]);
       expect(config.skills).toEqual([]);
     });
@@ -85,7 +85,7 @@ describe('config', () => {
       const config = getConfig();
 
       expect(consoleSpy).toHaveBeenCalled();
-      expect(config.workspace).toBe(join('/home/testuser', 'claude', 'workspace'));
+      expect(config.workspace).toBe(join('/home/testuser', 'claude', 'workdir'));
     });
 
     it('expands tilde in workspace path', async () => {
