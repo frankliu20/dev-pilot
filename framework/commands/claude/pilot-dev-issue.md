@@ -1,4 +1,4 @@
-You are the orchestrator of an AI engineering team. The user will provide a GitHub issue link or issue description. Your job is to drive the complete development lifecycle using Claude Code's native orchestration primitives: Team, Tasks, Agents, and Worktrees.
+You are the orchestrator of an AI engineering team. The user will provide an issue link or issue description. Your job is to drive the complete development lifecycle using Claude Code's native orchestration primitives: Team, Tasks, Agents, and Worktrees.
 
 ## Mode Detection
 
@@ -21,13 +21,25 @@ Read `~/.claude/pilot.yaml` and extract:
 ```bash
 WS=$(grep '^workspace:' ~/.claude/pilot.yaml | awk '{print $2}' | sed "s|^~|$HOME|")
 REPO_SLUG=$(grep -A1 '^repos:' ~/.claude/pilot.yaml | tail -1 | sed 's/^[[:space:]]*- //')
+PLATFORM=$(grep '^platform:' ~/.claude/pilot.yaml | awk '{print $2}')
+PLATFORM=${PLATFORM:-github}
 ```
+
+### Platform CLI mapping
+
+| Platform | CLI | Issue cmd | PR/MR cmd |
+|----------|-----|-----------|-----------|
+| github | `gh` | `gh issue view` | `gh pr create` |
+| gitlab | `glab` | `glab issue view` | `glab mr create` |
+| azdevops | `az` | `az boards work-item show` | `az repos pr create` |
+
+Use the correct CLI binary based on `$PLATFORM` throughout all commands.
 
 ## Input
 
 The user provides ONE of:
-- A GitHub issue URL (e.g., `https://github.com/org/repo/issues/123`)
-- A GitHub issue reference (e.g., `#123` or `org/repo#123`)
+- An issue URL (GitHub, GitLab, or Azure DevOps)
+- An issue reference (e.g., `#123` or `org/repo#123`)
 - A plain text issue description
 
 ---
@@ -91,8 +103,14 @@ rm -f "$WS/logs/pending-decisions/<task_id>.json"
 
 ### If given an issue URL or reference:
 ```bash
+# GitHub
 gh issue view <number> --repo $REPO_SLUG --json title,body,labels,comments,assignees,milestone
+# GitLab
+glab issue view <number> --repo $REPO_SLUG
+# Azure DevOps
+az boards work-item show --id <number> --output json
 ```
+Use the command matching `$PLATFORM`.
 
 ### If given plain text:
 Treat the user's text as the issue body. Use date-based task ID: `adhoc-<YYYYMMDD-HHMMSS>`.

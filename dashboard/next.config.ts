@@ -18,6 +18,7 @@ function loadPilotEnv(): Record<string, string> {
     return {
       NEXT_PUBLIC_GITHUB_REPO: repos[0] || '',
       NEXT_PUBLIC_GITHUB_REPOS: JSON.stringify(repos),
+      NEXT_PUBLIC_PLATFORM: (config.platform as string) || 'github',
     };
   } catch {
     return {};

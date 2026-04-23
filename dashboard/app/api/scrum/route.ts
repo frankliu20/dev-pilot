@@ -1,5 +1,5 @@
 // GET   /api/scrum — generate scrum report (Done / Ongoing / Blocker) since last scrum mark
-// POST  /api/scrum — post status updates as comments to GitHub issues
+// POST  /api/scrum — post status updates as comments to issues
 // PATCH /api/scrum — update the "last scrum" timestamp mark
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -15,6 +15,7 @@ import {
 } from '@/lib/github';
 import { getWorkspace } from '@/lib/config';
 import { REPO } from '@/lib/types';
+import { issueCommentArgs, getCliBinary } from '@/lib/git-provider';
 
 const execAsync = promisify(exec);
 
@@ -193,8 +194,10 @@ export async function POST(request: NextRequest) {
   for (const update of updates) {
     try {
       const targetRepo = update.repo || REPO;
+      const cli = getCliBinary();
+      const args = issueCommentArgs(targetRepo, update.issueNumber, update.comment);
       await execAsync(
-        `gh issue comment ${update.issueNumber} --repo ${targetRepo} --body "${update.comment.replace(/"/g, '\\"')}"`,
+        `${cli} ${args}`,
         { timeout: 15000 },
       );
       results.push({ number: update.issueNumber, success: true });

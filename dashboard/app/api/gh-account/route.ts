@@ -1,9 +1,11 @@
-// GET /api/gh-account — list authenticated GitHub accounts
+// GET /api/gh-account — list authenticated accounts (GitHub/GitLab/AzDevOps)
 // POST /api/gh-account — switch active account
 
 import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { getPlatform } from '@/lib/config';
+import { authStatusCommand } from '@/lib/git-provider';
 
 const execAsync = promisify(exec);
 
@@ -48,8 +50,9 @@ function parseAuthStatus(output: string): GHAccount[] {
 
 export async function GET() {
   try {
-    // gh auth status may write to stderr or stdout depending on version/platform
-    const result = await execAsync('gh auth status', {
+    const cmd = authStatusCommand();
+    // gh/glab auth status may write to stderr or stdout depending on version/platform
+    const result = await execAsync(cmd, {
       encoding: 'utf-8',
       timeout: 10000,
     });
@@ -57,32 +60,39 @@ export async function GET() {
     const accounts = parseAuthStatus(output);
     return NextResponse.json({ accounts });
   } catch (err: any) {
-    // gh auth status may exit with non-zero but still output account info
+    // gh/glab auth status may exit with non-zero but still output account info
     const output = err.stderr || err.stdout || '';
     const accounts = parseAuthStatus(output);
     if (accounts.length > 0) {
       return NextResponse.json({ accounts });
     }
     console.error('[gh-account] Failed to get auth status:', err);
-    return NextResponse.json({ accounts: [], error: 'Failed to get GitHub auth status' }, { status: 500 });
+    return NextResponse.json({ accounts: [], error: 'Failed to get auth status' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
+  const platform = getPlatform();
   try {
     const { user } = await request.json();
     if (!user || typeof user !== 'string') {
       return NextResponse.json({ error: 'Missing or invalid "user" field' }, { status: 400 });
     }
 
-    await execAsync(`gh auth switch --user ${user}`, {
-      encoding: 'utf-8',
-      timeout: 10000,
-    });
+    // Only GitHub supports account switching via CLI
+    if (platform === 'github') {
+      await execAsync(`gh auth switch --user ${user}`, {
+        encoding: 'utf-8',
+        timeout: 10000,
+      });
+    } else {
+      return NextResponse.json({ error: `Account switching not supported for ${platform}` }, { status: 400 });
+    }
 
     // Return updated account list
     try {
-      const { stderr } = await execAsync('gh auth status', { encoding: 'utf-8', timeout: 10000 });
+      const cmd = authStatusCommand();
+      const { stderr } = await execAsync(cmd, { encoding: 'utf-8', timeout: 10000 });
       const accounts = parseAuthStatus(stderr);
       return NextResponse.json({ accounts });
     } catch (statusErr: any) {
@@ -91,6 +101,6 @@ export async function POST(request: NextRequest) {
     }
   } catch (err: any) {
     console.error('[gh-account] Failed to switch account:', err);
-    return NextResponse.json({ error: 'Failed to switch GitHub account' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to switch account' }, { status: 500 });
   }
 }

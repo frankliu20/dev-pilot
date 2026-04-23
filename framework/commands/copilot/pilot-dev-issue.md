@@ -1,4 +1,4 @@
-You are the orchestrator of an AI engineering team. The user will provide a GitHub issue link or issue description. Your job is to drive the complete development lifecycle: analyze → code → test → PR.
+You are the orchestrator of an AI engineering team. The user will provide an issue link or issue description. Your job is to drive the complete development lifecycle: analyze → code → test → PR.
 
 ## Mode Detection
 
@@ -21,11 +21,23 @@ Strip `--auto` and `--test-scenario <id>` from the input before processing the i
 
 ## Workspace
 
-First, read `~/.claude/pilot.yaml` and extract the `workspace` field as `$WS`. Also extract `repos[0]` as `$REPO_SLUG` (e.g., `owner/repo-name`) for use in all `gh` commands.
+First, read `~/.claude/pilot.yaml` and extract the `workspace` field as `$WS`. Also extract `repos[0]` as `$REPO_SLUG` and the `platform` field.
 ```bash
 WS=$(grep '^workspace:' ~/.claude/pilot.yaml | awk '{print $2}' | sed "s|^~|$HOME|")
 REPO_SLUG=$(grep -A1 '^repos:' ~/.claude/pilot.yaml | tail -1 | sed 's/^[[:space:]]*- //')
+PLATFORM=$(grep '^platform:' ~/.claude/pilot.yaml | awk '{print $2}')
+PLATFORM=${PLATFORM:-github}
 ```
+
+### Platform CLI mapping
+
+| Platform | CLI | Issue cmd | PR/MR cmd | PR check cmd |
+|----------|-----|-----------|-----------|--------------|
+| github | `gh` | `gh issue view` | `gh pr create` | `gh pr list` |
+| gitlab | `glab` | `glab issue view` | `glab mr create` | `glab mr list` |
+| azdevops | `az` | `az boards work-item show` | `az repos pr create` | `az repos pr list` |
+
+Use the correct CLI binary based on `$PLATFORM` throughout all commands below.
 - All logs are stored under `$WS/logs/`.
 - Base repo is cloned under `$WS/<repo-name>/`. Worktrees are created under `$WS/worktrees/`.
 - **Always `cd` into the correct worktree directory before running any git/build/test commands.**
@@ -143,7 +155,10 @@ cd "$REPO"
 git branch --all | grep -i "issue-<number>\|<number>"
 ```
 ```bash
-# Check for existing open PRs for this issue
+# Check for existing open PRs for this issue (use platform CLI)
+# GitHub: gh pr list --repo $REPO_SLUG --state open --json number,title,headRefName,body --jq '...'
+# GitLab: glab mr list --repo $REPO_SLUG --state opened
+# Azure DevOps: az repos pr list --repository $REPO_SLUG --status active
 gh pr list --repo $REPO_SLUG \
   --state open --json number,title,headRefName,body \
   --jq '[.[] | select(.body | test("#<number>"; "i")) // select(.headRefName | test("<number>"))]'
@@ -196,7 +211,10 @@ Branch name: `fix/adhoc-20260405-143022` or `feat/adhoc-20260405-143022`
 
 ### If given an issue URL or reference:
 ```bash
-# Always use gh to fetch issue details from the project repo
+# Use platform-appropriate CLI:
+# GitHub:   gh issue view <number> --repo $REPO_SLUG --json title,body,labels,comments,assignees,milestone
+# GitLab:   glab issue view <number> --repo $REPO_SLUG
+# Azure DevOps: az boards work-item show --id <number> --output json
 gh issue view <number> --repo $REPO_SLUG --json title,body,labels,comments,assignees,milestone
 ```
 

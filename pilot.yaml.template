@@ -5,7 +5,15 @@
 # Workspace directory — where repos, logs, and worktrees are stored
 workspace: ~/claude/workspace
 
-# GitHub repos to work with (owner/repo format)
+# Git platform — which hosting service to use
+# Options: github, gitlab, azdevops
+# Each platform requires its own CLI tool:
+#   github  → gh     (https://cli.github.com)
+#   gitlab  → glab   (https://gitlab.com/gitlab-org/cli)
+#   azdevops → az    (https://aka.ms/azure-cli + az devops extension)
+platform: github
+
+# Repos to work with (owner/repo format)
 # The first repo is the primary target for /pilot-dev-issue
 repos:
   - your-org/your-repo

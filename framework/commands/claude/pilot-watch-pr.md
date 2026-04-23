@@ -11,7 +11,19 @@ Read `~/.claude/pilot.yaml` and extract:
 ```bash
 WS=$(grep '^workspace:' ~/.claude/pilot.yaml | awk '{print $2}' | sed "s|^~|$HOME|")
 REPOS=$(awk '/^repos:/{found=1;next} found && /^[[:space:]]*- /{gsub(/^[[:space:]]*- /,""); print} found && /^[^[:space:]]/{exit}' ~/.claude/pilot.yaml)
+PLATFORM=$(grep '^platform:' ~/.claude/pilot.yaml | awk '{print $2}')
+PLATFORM=${PLATFORM:-github}
 ```
+
+### Platform CLI mapping
+
+| Platform | PR list cmd | GraphQL support |
+|----------|------------|-----------------|
+| github | `gh pr list` | Yes (`gh api graphql`) |
+| gitlab | `glab mr list` | No — skip unresolved thread checks |
+| azdevops | `az repos pr list` | No — skip unresolved thread checks |
+
+Use the correct CLI based on `$PLATFORM`. GraphQL review thread checks only work on GitHub.
 
 ## On Launch: Set Up Monitoring
 

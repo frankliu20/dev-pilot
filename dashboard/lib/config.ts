@@ -14,6 +14,7 @@ export interface PilotConfig {
   workspace: string;
   repos: string[];
   skills: string[];
+  platform?: 'github' | 'gitlab' | 'azdevops';
   ai_platform?: 'copilot-cli' | 'claude-code';
   defaults?: PilotDefaults;
   build?: {
@@ -93,4 +94,8 @@ export function getAiPlatform(): 'copilot-cli' | 'claude-code' {
 
 export function getDefaults(): PilotDefaults {
   return getConfig().defaults || {};
+}
+
+export function getPlatform(): 'github' | 'gitlab' | 'azdevops' {
+  return getConfig().platform || 'github';
 }

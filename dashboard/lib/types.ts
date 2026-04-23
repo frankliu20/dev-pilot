@@ -2,7 +2,14 @@
 
 // Repo info injected by next.config.ts from pilot.yaml (client-safe)
 export const REPO = process.env.NEXT_PUBLIC_GITHUB_REPO || '';
-export const REPO_URL = `https://github.com/${REPO}`;
+export const PLATFORM = (process.env.NEXT_PUBLIC_PLATFORM || 'github') as 'github' | 'gitlab' | 'azdevops';
+
+const PLATFORM_HOSTS: Record<string, string> = {
+  github: 'https://github.com/',
+  gitlab: 'https://gitlab.com/',
+  azdevops: 'https://dev.azure.com/',
+};
+export const REPO_URL = `${PLATFORM_HOSTS[PLATFORM] || PLATFORM_HOSTS.github}${REPO}`;
 
 // Repos to check for review-requested PRs (from pilot.yaml via next.config.ts)
 export const REVIEW_REPOS: string[] = (() => {

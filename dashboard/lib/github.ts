@@ -1,24 +1,17 @@
 // GitHub data fetching via gh CLI (async)
+// Platform-aware: uses git-provider to support GitHub, GitLab, and Azure DevOps.
 
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { join } from 'path';
 import { GHIssue, GHPR, PRAction } from './types';
 import { getConfig, getRepo, getReviewRepos, getWorkspace } from './config';
+import { runCLI, getPlatform, supportsGraphQL, repoFromUrl } from './git-provider';
 
 const execAsync = promisify(exec);
 
 async function runGH(args: string): Promise<string> {
-  try {
-    const { stdout } = await execAsync(`gh ${args}`, {
-      encoding: 'utf-8',
-      timeout: 15000,
-    });
-    return stdout;
-  } catch (err) {
-    console.error(`gh command failed: gh ${args}`, err);
-    return '[]';
-  }
+  return runCLI(args);
 }
 
 /** Fetch issues from ALL configured repos, merge and sort by updatedAt */
@@ -81,11 +74,8 @@ export async function fetchReviewRequestedPRs(): Promise<GHPR[]> {
   return results.flat().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-/** Extract owner/name from a GitHub PR url, e.g. "https://github.com/owner/repo/pull/123" */
-function repoFromUrl(url: string): string | null {
-  const m = url.match(/github\.com\/([^/]+\/[^/]+)\//);
-  return m ? m[1] : null;
-}
+/** Extract owner/name from a PR url — delegates to git-provider */
+// repoFromUrl is imported from git-provider
 
 /**
  * Fetch unresolved review thread counts.
@@ -95,6 +85,9 @@ export async function fetchUnresolvedThreadCounts(
   prs: GHPR[]
 ): Promise<Map<number, number>> {
   if (prs.length === 0) return new Map();
+
+  // GraphQL is only supported on GitHub
+  if (!supportsGraphQL()) return new Map();
 
   // Group PR numbers by repo
   const byRepo = new Map<string, number[]>();

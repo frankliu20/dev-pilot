@@ -160,6 +160,7 @@ function parseSimpleYaml(content) {
 function writeYaml(config) {
   let yaml = '# Dev Pilot Configuration\n\n';
   yaml += `workspace: ${config.workspace}\n\n`;
+  yaml += `platform: ${config.platform || 'github'}\n\n`;
   yaml += 'repos:\n';
   for (const repo of (config.repos || [])) {
     yaml += `  - ${repo}\n`;
@@ -223,6 +224,32 @@ async function main() {
       config.workspace = answer || defaultWs;
     }
     config.workspace = path.resolve(config.workspace);
+
+    // Platform
+    const PLATFORM_CLI = { github: 'gh', gitlab: 'glab', azdevops: 'az' };
+    const PLATFORM_INSTALL = {
+      github: 'https://cli.github.com',
+      gitlab: 'https://gitlab.com/gitlab-org/cli',
+      azdevops: 'https://aka.ms/azure-cli (+ az devops extension)',
+    };
+
+    console.log('  Git platforms:');
+    console.log('    1) github  — GitHub (uses gh CLI)');
+    console.log('    2) gitlab  — GitLab (uses glab CLI)');
+    console.log('    3) azdevops — Azure DevOps (uses az CLI)');
+    const platformAnswer = await askQuestion('  Platform [1]: ');
+    const platformMap = { '1': 'github', '2': 'gitlab', '3': 'azdevops', '': 'github' };
+    config.platform = platformMap[platformAnswer] || 'github';
+
+    // Check CLI availability
+    const cliBin = PLATFORM_CLI[config.platform];
+    try {
+      execSync(`${cliBin} --version`, { stdio: 'pipe' });
+      console.log(`  ✓ ${cliBin} CLI detected`);
+    } catch {
+      console.log(`  ⚠ ${cliBin} CLI not found. Install it: ${PLATFORM_INSTALL[config.platform]}`);
+      console.log(`    Then authenticate: ${cliBin === 'az' ? 'az login && az devops configure --defaults organization=https://dev.azure.com/YOUR_ORG' : `${cliBin} auth login`}`);
+    }
 
     // Repos
     config.repos = [];
@@ -342,9 +369,15 @@ async function main() {
           ? 'y'  // Non-interactive: auto-clone
           : await askQuestion(`  Clone ${repo}? (Y/n): `);
         if (clone.toLowerCase() !== 'n') {
+          const CLONE_HOSTS = {
+            github: 'https://github.com/',
+            gitlab: 'https://gitlab.com/',
+            azdevops: 'https://dev.azure.com/',
+          };
+          const platform = config.platform || 'github';
           const gitUrl = repo.startsWith('https://')
             ? (repo.endsWith('.git') ? repo : `${repo}.git`)
-            : `https://github.com/${repo}.git`;
+            : `${CLONE_HOSTS[platform]}${repo}.git`;
           console.log(`  [CLONE]  ${gitUrl}`);
           try {
             execSync(`git clone ${gitUrl}`, { cwd: workspace, stdio: 'inherit' });
