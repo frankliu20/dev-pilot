@@ -225,22 +225,22 @@ Mark implementation task as completed.
 
 ## Step 7: Test & Fix
 
-Check if a test-runner skill exists at `~/.claude/skills/mod-java-test-runner/SKILL.md`:
-- If yes → launch `/mod-java-test-runner` with strategy and context
+Check if a `test_runner_skill` is configured in `pilot.yaml` and the corresponding skill file exists:
+- If yes → launch the configured test runner skill with strategy and context
 - If no → execute inline:
 
 ### Strategy 1 — Build Only:
-- Run build command from `pilot.yaml` (`build.command`, default: `npm run build`)
+- If `build.command` is set in `pilot.yaml`, use it. Otherwise, analyze the project (e.g., `package.json`, `pom.xml`, `Makefile`, `Cargo.toml`) and determine the correct build command.
 - Build fails → auto-fix up to 3 rounds
 - Build passes → proceed
 
 ### Strategy 2 — Build + Impacted Tests:
-- Run build command
-- Run impacted unit tests using `build.test_command` from `pilot.yaml`
+- Run build (same detection logic as strategy 1)
+- Determine and run impacted unit tests. If `build.test_command` is set in `pilot.yaml`, use it (replace `{{file}}` with the test file pattern). Otherwise, detect the test framework from the project and run only tests related to changed files.
 - Failures → auto-fix up to 3 rounds
 
 ### Strategy 3 — Build + Tests + Manual Verify:
-- Run build + impacted tests
+- Run build + impacted tests (same as strategy 2)
 - Failures → auto-fix up to 3 rounds
 - All pass → prepare manual verify environment, STOP and wait for user "ok"
 

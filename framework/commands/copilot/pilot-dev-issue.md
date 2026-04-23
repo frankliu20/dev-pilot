@@ -314,26 +314,25 @@ After plan approval:
 
 ## Phase 5: Test & Fix
 
-Check if a test-runner skill is available by looking for `~/.claude/skills/mod-java-test-runner/SKILL.md`:
-- If it exists → launch `/mod-java-test-runner` with the chosen test strategy and relevant context (changed files, test strategy number, scenario id if applicable: `vscode` for 3a, `intellij` for 3b, `mcp-server` for 3c)
+Check if a `test_runner_skill` is configured in `pilot.yaml` and the corresponding skill file exists:
+- If it exists → launch the configured test runner skill with the chosen test strategy and relevant context (changed files, test strategy number)
 - If it does NOT exist → execute the strategies inline as described below
 
 ### Strategy 1 — Build Only (default):
-- Run the build command from `~/.claude/pilot.yaml` (`build.command`, default: `npm run build`)
+- If `build.command` is set in `pilot.yaml`, use it. Otherwise, analyze the project (e.g., `package.json`, `pom.xml`, `Makefile`, `Cargo.toml`) and determine the correct build command.
 - If build fails: auto-fix up to 3 rounds
 - Build passes → proceed to Phase 6
 
 ### Strategy 2 — Build + Impacted Unit Tests:
-- Run the build command from `pilot.yaml`
-- Run **only the impacted unit tests** (test files related to changed source files) using the test command from `pilot.yaml` (`build.test_command`, default: `npx jest --testPathPattern={{file}} --no-coverage`). Replace `{{file}}` with the test file pattern.
+- Run build (same detection logic as strategy 1)
+- Determine and run impacted unit tests. If `build.test_command` is set in `pilot.yaml`, use it (replace `{{file}}` with the test file pattern). Otherwise, detect the test framework from the project and run only tests related to changed files.
 - If either fails: auto-fix up to 3 rounds
 - All pass → proceed to Phase 6
 
 ### Strategy 3 — Build + Impacted Unit Tests + Manual Verify:
-- Run the build command from `pilot.yaml`
-- Run **only the impacted unit tests**
+- Run build + impacted tests (same as strategy 2)
 - If either fails: auto-fix up to 3 rounds
-- All pass → prepare the manual verify environment based on the chosen scenario (3a/3b/3c) and STOP:
+- All pass → prepare the manual verify environment and STOP:
   - **Before prompting the user**, write a decision notification file (see "Decision Notifications" section).
   - Wait for user to reply "ok" or describe issues to fix.
   - After user responds, delete the pending decision file.

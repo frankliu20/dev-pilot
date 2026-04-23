@@ -4,7 +4,7 @@
 
 import { openClaudeTerminal } from './terminal';
 import { deriveTasks } from './statusLog';
-import { TaskPhase, TestScenario, CliTool, CLI_TOOL_CONFIG } from './types';
+import { TaskPhase, CliTool, CLI_TOOL_CONFIG } from './types';
 
 export interface WorkerEntry {
   taskId: string;       // e.g. "issue-5113"
@@ -24,7 +24,7 @@ class TaskRegistry {
    * Assign an issue to Claude. Opens a terminal and tracks the task.
    * Returns 'already_running' if this taskId is still active (based on log phase).
    */
-  assign(taskId: string, issueUrl: string, mode: 'normal' | 'auto' = 'normal', force: boolean = false, testScenario?: TestScenario, cliTool: CliTool = 'claude'): { result: 'started' | 'already_running'; entry?: WorkerEntry; error?: string } {
+  assign(taskId: string, issueUrl: string, mode: 'normal' | 'auto' = 'normal', force: boolean = false, cliTool: CliTool = 'claude'): { result: 'started' | 'already_running'; entry?: WorkerEntry; error?: string } {
     // Refresh status from JSONL logs
     this.refreshFromLogs();
 
@@ -36,7 +36,6 @@ class TaskRegistry {
     const termResult = openClaudeTerminal({
       issueUrl,
       mode,
-      testScenario,
       cliTool,
     });
     if (!termResult.success) {

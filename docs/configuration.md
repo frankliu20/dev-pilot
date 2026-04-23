@@ -4,7 +4,7 @@ Dev Pilot is configured through two files in `~/.claude/`:
 
 | File | Purpose |
 |------|---------|
-| `pilot.yaml` | Project settings — workspace, repos, skills, defaults |
+| `pilot.yaml` | Project settings — workspace, repos, defaults |
 | `settings.json` | Claude Code permissions (not managed by init.js) |
 
 ## pilot.yaml
@@ -17,10 +17,7 @@ workspace: ~/claude/workspace
 repos:
   - your-org/your-repo
 
-skills:
-  - modernize-java          # Activate skill packs
-
-ai_platform: copilot-cli    # copilot-cli or claude-code
+ai_platform: claude-code     # claude-code or copilot-cli
 
 defaults:
   dev_issue_mode: normal     # normal or auto
@@ -28,7 +25,7 @@ defaults:
   fix_comment_mode: auto     # auto or normal
   review_min_severity: medium # high, medium, or low
 
-# build:
+# build:                     # Optional — auto-detected from project if omitted
 #   command: npm run build
 #   test_command: npx jest --testPathPattern={{file}} --no-coverage
 #   default_branch: main
@@ -40,22 +37,22 @@ defaults:
 |-------|------|---------|-------------|
 | `workspace` | string | `~/claude/workspace` | Root directory for cloned repos. Tilde (`~`) is expanded |
 | `repos` | string[] | `[]` | GitHub repos in `owner/repo` format |
-| `skills` | string[] | `[]` | Skill pack names to activate (must match directories under `skills/`) |
-| `ai_platform` | string | `copilot-cli` | CLI tool: `claude-code` or `copilot-cli` |
+| `ai_platform` | string | `claude-code` | CLI tool: `claude-code` or `copilot-cli` |
 | `defaults.dev_issue_mode` | string | `normal` | Default mode for `/pilot-dev-issue` (`normal` = interactive, `auto` = unattended) |
 | `defaults.review_pr_mode` | string | `auto` | Default mode for PR review tasks |
 | `defaults.fix_comment_mode` | string | `auto` | Default mode for fixing review comments |
 | `defaults.review_min_severity` | string | `medium` | Minimum severity threshold for PR reviews |
-| `build.command` | string | — | Custom build command (overrides skill pack defaults) |
-| `build.test_command` | string | — | Custom test command. `{{file}}` is replaced with the test file path |
+| `build.command` | string | auto-detect | Override build command. If omitted, LLM analyzes the project to determine the correct command |
+| `build.test_command` | string | auto-detect | Override test command. `{{file}}` is replaced with the test file path |
 | `build.default_branch` | string | `main` | Default branch for git operations |
+| `test_runner_skill` | string | — | Name of a custom test runner skill in `~/.claude/skills/` (advanced — for complex test workflows) |
 
 ### Preset Configs
 
 Use `--config` flag with a preset file:
 
 ```bash
-node init.js --config modernize-java-pilot.yaml
+node init.js --config my-project-pilot.yaml
 ```
 
 Preset files live in the repo root and provide pre-filled values for specific projects.

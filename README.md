@@ -8,7 +8,6 @@ A complete toolkit for building a **personal AI engineering team** powered by Cl
 |-----------|-------------|
 | **Commands** (2) | `/pilot-dev-issue` — 7-phase dev orchestrator; `/pilot-watch-pr` — PR monitor with auto-fix |
 | **Agents** (3) | `pilot-code-explorer`, `pilot-pr-creator`, `pilot-pr-reviewer` |
-| **Skill Packs** | Project-specific knowledge & scripts (e.g., `modernize-java`) |
 | **Dashboard** | Next.js web UI — issues, PRs, tasks, decisions, reports |
 
 ## Quick Start
@@ -18,10 +17,7 @@ A complete toolkit for building a **personal AI engineering team** powered by Cl
 git clone <repo-url> dev-pilot && cd dev-pilot
 node init.js                    # Interactive setup → ~/.claude/pilot.yaml
 
-# 2. (Optional) Use a preset config
-node init.js --config modernize-java-pilot.yaml
-
-# 3. Start the dashboard
+# 2. Start the dashboard
 cd dashboard && npm install && npm run dev
 # Open http://localhost:3000
 ```
@@ -39,7 +35,7 @@ You (the engineer)
   │
   ├── /pilot-dev-issue #123        → 7-phase automated development
   │   ├── pilot-code-explorer (×2-3) → Parallel codebase analysis
-  │   ├── test-runner skill          → Build, test, auto-fix
+  │   ├── auto-detected build & test  → Build, test, auto-fix
   │   └── pilot-pr-creator           → Commit & PR creation
   ├── /pilot-watch-pr              → Monitor PRs, auto-fix CI
   │
@@ -54,22 +50,12 @@ claude "/pilot-dev-issue --auto https://github.com/org/repo/issues/123" &
 claude "/pilot-dev-issue --auto https://github.com/org/repo/issues/456" &
 ```
 
-### Personal Skills
-
-Create skills that are **local to your machine** and never pushed to remote:
-
-1. Add a skill directory to `personal-skills/` (e.g., `personal-skills/my-tool/SKILL.md`)
-2. Run `node init.js --force` to install to `~/.claude/skills/`
-
-Personal skills install after skill packs, so they can override pack skills with the same name. See [`personal-skills/README.md`](personal-skills/README.md) for details.
-
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [Configuration Guide](docs/configuration.md) | `pilot.yaml`, `settings.json`, environment variables |
+| [Configuration Guide](docs/configuration.md) | `pilot.yaml`, `settings.json`, build/test config |
 | [Architecture & File Structure](docs/architecture.md) | Project layout, module responsibilities, data flow |
-| [Creating Skill Packs](docs/creating-skill-packs.md) | Build project-specific knowledge packs |
 | [Claude with Copilot API](docs/claude-with-copilot-api.md) | Run Claude Code through GitHub Copilot API proxy |
 | [Developer Guide](docs/dev-guide.md) | Build, test, and contribute — practical workflows |
 | [Integration Test Plan](dashboard/INTEGRATION_TEST_PLAN.md) | 34 integration test scenarios across 5 pipelines |
