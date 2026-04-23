@@ -8,6 +8,7 @@ vi.mock('@/lib/terminal', () => ({
 vi.mock('@/lib/types', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/types')>()),
   REPO: 'owner/repo',
+  REPO_URL: 'https://github.com/owner/repo',
 }));
 
 import { POST } from '@/app/api/tasks/review-pr/route';
@@ -59,7 +60,7 @@ describe('POST /api/tasks/review-pr', () => {
     expect(res.status).toBe(400);
 
     const body = await res.json();
-    expect(body.error).toContain('Invalid PR URL');
+    expect(body.error).toContain('Invalid PR/MR URL');
   });
 
   it('returns 400 when both prNumber and prUrl are missing', async () => {

@@ -8,6 +8,7 @@ vi.mock('@/lib/terminal', () => ({
 vi.mock('@/lib/types', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/types')>()),
   REPO: 'owner/repo',
+  REPO_URL: 'https://github.com/owner/repo',
 }));
 
 import { POST } from '@/app/api/tasks/fix-comments/route';
