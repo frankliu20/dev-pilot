@@ -90,7 +90,7 @@ function DashboardInner() {
   const cliDisplayName = CLI_TOOL_CONFIG[cliTool].displayName;
 
   const handleAssign = useCallback(async (issue: GHIssue, mode: 'normal' | 'auto' = 'normal', force: boolean = false) => {
-    const issueUrl = `${REPO_URL}/issues/${issue.number}`;
+    const issueUrl = issue.url;
     try {
       const res = await fetch('/api/tasks/assign', {
         method: 'POST',

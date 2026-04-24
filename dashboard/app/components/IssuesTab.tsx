@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import { GHIssue, ClaudeTask, TaskPhase, REPO_URL } from '@/lib/types';
+import { GHIssue, ClaudeTask, TaskPhase } from '@/lib/types';
 import { PHASE_CONFIG, ACTIVE_PHASES } from '@/lib/constants';
 import Icon from './ui/Icon';
 import Badge from './ui/Badge';
@@ -244,7 +244,7 @@ export default function IssuesTab({ issues, tasks, loading, onRefresh, onAssign,
                   >
                     <td className={styles.colNumber}>
                       <a
-                        href={`${REPO_URL}/issues/${issue.number}`}
+                        href={issue.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={styles.issueNumber}
