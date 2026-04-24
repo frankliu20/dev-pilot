@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { GHIssue, ClaudeTask, TaskPhase, REPO_URL } from '@/lib/types';
+import { GHIssue, ClaudeTask, TaskPhase } from '@/lib/types';
 
 type FixMode = 'normal' | 'auto';
 
@@ -49,7 +49,7 @@ export default function IssueDetail({ issue, loading, tasks, onBack, onAssign }:
 
       <div className="detail-header">
         <a
-          href={`${REPO_URL}/issues/${issue.number}`}
+          href={issue.url}
           target="_blank"
           rel="noopener noreferrer"
           className="detail-number"
@@ -103,7 +103,7 @@ export default function IssueDetail({ issue, loading, tasks, onBack, onAssign }:
           </button>
         )}
         <a
-          href={`${REPO_URL}/issues/${issue.number}`}
+          href={issue.url}
           target="_blank"
           rel="noopener noreferrer"
           className="github-link"

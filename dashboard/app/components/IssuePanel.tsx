@@ -59,7 +59,7 @@ export default function IssuePanel({ issue, loading, tasks, onClose, onAssign }:
         {/* Header */}
         <div className={styles.header}>
           <a
-            href={`${REPO_URL}/issues/${issue.number}`}
+            href={issue.url}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.issueNumber}
@@ -154,7 +154,7 @@ export default function IssuePanel({ issue, loading, tasks, onClose, onAssign }:
             </Button>
           )}
           <a
-            href={`${REPO_URL}/issues/${issue.number}`}
+            href={issue.url}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.githubLink}
